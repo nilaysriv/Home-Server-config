@@ -57,7 +57,7 @@ All persistent data for the services are mapped to directories under `/mnt/data`
 
 ## 🔗 Access Links
 
-All services are accessible on the local network (`192.168.1.19` is the server's local IP). For remote access, use your **Tailscale IP** or **Tailscale Hostname**.
+All services are accessible on the local network. For remote access, use your **Tailscale IP** or **Tailscale Hostname**.
 
 | Service | URL (Local/Tailscale) | Login/Notes |
 | :--- | :--- | :--- |
