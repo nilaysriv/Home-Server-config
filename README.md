@@ -34,8 +34,8 @@ To easily migrate or restore the entire environment, use the provided `setup_my_
 
 1.  Clone this repository to your new machine.
 2.  Ensure your data drive is mounted at `/mnt/data`.
-3.  Give the script execution permission: `chmod +x setup_my_stack.sh`
-4.  Run the script: `./setup_my_stack.sh`
+3.  Give the script execution permission: `chmod +x conf.sh`
+4.  Run the script: `./conf.sh`
 
 -----
 
