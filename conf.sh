@@ -21,7 +21,7 @@ then
     sudo usermod -aG docker ${USER_NAME}
     
     echo "Docker installed. User added to 'docker' group."
-    echo "You must log out and log back in for new permissions to take effect. Rerun the script afterwards."
+    echo "Move the docker-compose.yml file to /mnt/data/nextcloud-setup. You must log out and log back in for new permissions to take effect. Rerun the script afterwards."
     exit 1
 fi
 
