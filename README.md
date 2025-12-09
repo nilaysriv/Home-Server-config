@@ -64,6 +64,12 @@ All services are accessible on the local network. For remote access, use your **
 
 -----
 
+## Screenshots [The Rice]
+
+![screenshot](fastfetch.png)
+![screenshot](btop.png)
+![screenshot](containers.png)
+
 ## Key Configuration Files
 
 The entire stack is defined in the single **`docker-compose.yml`** file located in the root of this project.
@@ -80,3 +86,4 @@ sudo docker exec nextcloud-setup-db-1 mysql -u root -pstrongpassword123 -e "DELE
 sudo docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete overwriteprotocol
 sudo docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete trusted_proxies
 ```
+
