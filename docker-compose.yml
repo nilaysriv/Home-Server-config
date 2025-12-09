@@ -58,62 +58,19 @@ services:
       - /mnt/data/ai/open-webui:/app/backend/data
     depends_on:
       - ollama
-
-# --- 5. Dashy Dashboard ---
-  dashy:
-    image: lissy93/dashy:latest
-    container_name: dashy
+# --- 5. Syncthing (Obsidian Vault Sync) ---
+  syncthing:
+    image: lscr.io/linuxserver/syncthing
+    container_name: syncthing
     restart: unless-stopped
     ports:
-      # Host Port 8663 -> Container Port 8080 (Dashy's default)
-      - "8663:8080"
-    volumes:
-      # Maps the config folder to your persistent storage
-      - /mnt/data/dashy:/app/user-data
-# --- 7. cAdvisor (Container Metrics Collector) ---
-  cadvisor:
-    image: gcr.io/cadvisor/cadvisor:latest
-    container_name: cadvisor
-    restart: unless-stopped
-    volumes:
-      - /:/rootfs:ro
-      - /var/run:/var/run:ro
-      - /sys:/sys:ro
-      - /var/lib/docker/:/var/lib/docker:ro
-    # Note: cAdvisor exposes metrics on port 8080 internally
-
-  # --- 8. Prometheus (Metrics Database) ---
-  prometheus:
-    image: prom/prometheus:latest
-    container_name: prometheus
-    restart: unless-stopped
-    ports:
-      - "9091:9090" # Prometheus UI
-    volumes:
-      # Mount the configuration file created above
-      - /mnt/data/monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml:ro
-      # Volume for persistent data storage
-      - prometheus_data:/prometheus
-    depends_on:
-      - cadvisor
-    # Define a volume outside the services block at the bottom
-
-  # --- 9. Grafana (Dashboard and Visualization) ---
-  grafana:
-    image: grafana/grafana:latest
-    container_name: grafana
-    restart: unless-stopped
-    ports:
-      - "3001:3000" # Host Port 3001 -> Container Port 3000
+      - "8384:8384" # Web UI (Management)
+      - "22000:22000" # Sync Protocol (TCP)
+      - "21027:21027/udp" # Discovery Protocol (UDP)
     environment:
-      - GF_SECURITY_ADMIN_USER=admin
-      - GF_SECURITY_ADMIN_PASSWORD=strongpassword123 # Change this password!
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata # Set your timezone
     volumes:
-      - grafana_data:/var/lib/grafana
-    depends_on:
-      - prometheus
-
-# --- VOLUME DEFINITIONS (This is the top-level volumes section) ---
-volumes:
-  prometheus_data:
-  grafana_data:
+      - /mnt/data/syncthing/config:/config # Syncthing's database and settings
+      - /mnt/data/obsidian_vault:/vault # Mount your existing Obsidian Vault folder
