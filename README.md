@@ -10,9 +10,7 @@ All services are run via Docker Compose and are configured to communicate over t
 | :--- | :--- | :--- | :--- | :--- |
 | **Nextcloud** | `nextcloud-setup-app-1` | `8080` | Private Cloud Storage | Operational (HTTP) |
 | **AI Chatbot** | `open-webui` | `3000` | Local LLM Chat Interface | Operational (HTTP) |
-| **Dashy** | `dashy` | `8663` | Centralized Dashboard | Operational (HTTP) |
-| **Grafana** | `grafana` | `3001` | Visualization Dashboard | Operational (HTTP) |
-| **Prometheus** | `prometheus` | `9091` | Time-Series Metrics Database | Operational (HTTP) |
+| **Syncthing [For Obsidian]** | `syncthing` | `8384` | File Sync and Obsidian Vault set up (HTTP) |
 | **Ollama** | `ollama` | Internal | Local AI Model Backend | Operational |
 
 -----
@@ -52,8 +50,6 @@ All persistent data for the services are mapped to directories under `/mnt/data`
 | `/mnt/data/nextcloud-setup` | Contains `docker-compose.yml` and `setup_my_stack.sh`. **The project root.** |
 | `/mnt/data/nextcloud/` | All Nextcloud files and database storage. |
 | `/mnt/data/ai/` | Stores Ollama models and Open WebUI user data. |
-| `/mnt/data/monitoring/` | Stores Prometheus configuration (`prometheus.yml`). |
-| `/mnt/data/dashy/` | Stores the `conf.yml` dashboard configuration. |
 
 ## 🔗 Access Links
 
@@ -61,11 +57,9 @@ All services are accessible on the local network. For remote access, use your **
 
 | Service | URL (Local/Tailscale) | Login/Notes |
 | :--- | :--- | :--- |
-| **Dashy Dashboard** | `http://<ip-address>:8663` | Centralized links and host metrics. |
+| **Syncthing** | `http://<ip-address>:8384` | Syncthing for Obsidian vault and possible cloud saves for games |
 | **Nextcloud** | `http://<ip-address>:8080` | Use your Nextcloud user credentials. |
 | **AI Chatbot** | `http://<ip-address>:3000` | Log in with Open WebUI admin credentials. |
-| **Grafana** | `http://<ip-address>:3001` | User: `admin`, Pass: `strongpassword123` (Change immediately) |
-| **Prometheus** | `http://<ip-address>:9091` | Prometheus UI (Used for checking scrape targets). |
 | **Cockpit (OS Mgmt)** | `http://<ip-address>:9090` | Fedora Server Management. |
 
 -----
