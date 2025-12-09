@@ -44,6 +44,15 @@ services:
       - OLLAMA_HOST=0.0.0.0:11434
     volumes:
       - /mnt/data/ai/ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    # End of GPU passthrough
+
 
   # --- 4. AI Chatbot Frontend (HTTP 3000) ---
   open-webui:
