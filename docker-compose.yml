@@ -1,3 +1,4 @@
+nilay@nilay-server:/mnt/sda1/setup$ cat docker-compose.yml 
 version: '3.8'
 
 services:
@@ -9,41 +10,44 @@ services:
     restart: always
     command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
     volumes:
-      - /mnt/data/nextcloud/db:/var/lib/mysql
+      - /mnt/sda1/nextcloud/db:/var/lib/mysql
     environment:
       - MYSQL_ROOT_PASSWORD=strongpassword123
       - MYSQL_PASSWORD=strongpassword123
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
 
-  # --- 2. Nextcloud Application (HTTP 8080) ---
+  # --- 2. Nextcloud Application ---
   app:
     image: nextcloud
     container_name: nextcloud-setup-app-1
     restart: always
     ports:
-      - '8080:80' # Exposed on original HTTP port
+      - '8080:80'
     volumes:
-      - /mnt/data/nextcloud/html:/var/www/html
-      - /mnt/data/nextcloud/data:/var/www/html/data
+      - /mnt/sda1/nextcloud/html:/var/www/html
+      - /mnt/sda1/nextcloud/data:/var/www/html/data
+      # --- METHOD 1: Mapping SSD (Boot Drive) into Nextcloud ---
+      - /home/nilay/nextcloud_ssd:/var/www/html/data/nilayrakesh74@gmail.com/files/SSD_Storage
     environment:
       - MYSQL_PASSWORD=strongpassword123
       - MYSQL_DATABASE=nextcloud
       - MYSQL_USER=nextcloud
       - MYSQL_HOST=db
-      # NO PROXY ENVIRONMENT VARIABLES HERE
     depends_on:
       - db
 
-  # --- 3. AI Chatbot Backend ---
+  # --- 3. AI Chatbot Backend (Ollama) ---
   ollama:
     image: ollama/ollama
     container_name: ollama
     restart: always
+    ports:
+      - "11434:11434"  #port
     environment:
       - OLLAMA_HOST=0.0.0.0:11434
     volumes:
-      - /mnt/data/ai/ollama:/root/.ollama
+      - /mnt/sda1/ai/ollama:/root/.ollama
     deploy:
       resources:
         reservations:
@@ -51,35 +55,34 @@ services:
             - driver: nvidia
               count: all
               capabilities: [gpu]
-    # End of GPU passthrough
 
-
-  # --- 4. AI Chatbot Frontend (HTTP 3000) ---
+  # --- 4. AI Chatbot Frontend (Open-WebUI) ---
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
     restart: always
     ports:
-      - '3000:8080' # Exposed on original HTTP port
+      - '3000:8080'
     environment:
       - OLLAMA_BASE_URL=http://ollama:11434
     volumes:
-      - /mnt/data/ai/open-webui:/app/backend/data
+      - /mnt/sda1/ai/open-webui:/app/backend/data
     depends_on:
       - ollama
-# --- 5. Syncthing (Obsidian Vault Sync) ---
+
+  # --- 5. Syncthing (Obsidian Vault Sync) ---
   syncthing:
     image: lscr.io/linuxserver/syncthing
     container_name: syncthing
     restart: unless-stopped
     ports:
-      - "8384:8384" # Web UI (Management)
-      - "22000:22000" # Sync Protocol (TCP)
-      - "21027:21027/udp" # Discovery Protocol (UDP)
+      - "8384:8384"
+      - "22000:22000"
+      - "21027:21027/udp"
     environment:
       - PUID=1000
       - PGID=1000
-      - TZ=Asia/Kolkata # Set your timezone
+      - TZ=Asia/Kolkata
     volumes:
-      - /mnt/data/syncthing/config:/config # Syncthing's database and settings
-      - /mnt/data/obsidian_vault:/vault # Mount your existing Obsidian Vault folder
+      - /mnt/sda1/syncthing/config:/config
+      - /mnt/sda1/syncthing/data:/vault
