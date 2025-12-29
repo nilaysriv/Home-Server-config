@@ -1,6 +1,6 @@
 #  Nilay's Home Lab Stack
 
-This repository documents the setup and configuration for a fully functional, self-hosted Docker stack running on a Fedora server. This stack provides private cloud storage, a local AI chat engine, a centralized dashboard, and performance monitoring.
+This repository documents the setup and configuration for a fully functional, self-hosted Docker stack running on a Debian server. This stack provides private cloud storage, a local AI chat engine, Obsidian notes sync and Syncthing for file sharing.
 
 ## Services Overview
 
@@ -19,25 +19,21 @@ All services are run via Docker Compose and are configured to communicate over t
 
 Before launching the stack on a new machine, ensure the following are installed and configured:
 
-1.  **Operating System:** Fedora
+1.  **Operating System:** Debian/Ubuntu/Linux Mint
 2.  **Docker & Compose:** Docker Engine and Docker Compose Plugin installed.
 3.  **Tailscale:** Installed and running (for secure remote access).
-4.  **Data Drive:** The primary data drive **must be mounted to `/mnt/data`**.
+4.  **Data Drive:** The primary data drive **must be mounted to `/mnt/sda1`**.
 
 ## The "One-Click" Setup Script
 
-To easily migrate or restore the entire environment, use the provided `setup_my_stack.sh` script.
+To easily migrate or restore the entire environment, use the provided `conf.sh` script.
 
 **Steps:**
 
 1.  Clone this repository to your new machine.
-2.  Ensure your data drive is mounted at `/mnt/data`.
+2.  Ensure your data drive is mounted at `/mnt/sda1`.
 3.  Give the script execution permission: `chmod +x conf.sh`
 4.  Run the script: `./conf.sh`
-
------
-
-> **NOTE:** The script will pause and prompt you to **log out and log back in** after installing Docker and adding your user to the `docker` group. Rerun the script after re-login to complete the setup.
 
 -----
 
@@ -47,11 +43,11 @@ All persistent data for the services are mapped to directories under `/mnt/data`
 
 | Host Path | Purpose |
 | :--- | :--- |
-| `/mnt/data/nextcloud-setup` | Contains `docker-compose.yml` and `setup_my_stack.sh`. **The project root.** |
-| `/mnt/data/nextcloud/` | All Nextcloud files and database storage. |
-| `/mnt/data/ai/` | Stores Ollama models and Open WebUI user data. |
+| `/mnt/sda1/nextcloud-setup` | Contains `docker-compose.yml` and `setup_my_stack.sh`. **The project root.** |
+| `/mnt/sda1/nextcloud/` | All Nextcloud files and database storage. |
+| `/mnt/sda1/ai/` | Stores Ollama models and Open WebUI user data. |
 
-## 🔗 Access Links
+## Access Links
 
 All services are accessible on the local network. For remote access, use your **Tailscale IP** or **Tailscale Hostname**.
 
@@ -65,8 +61,6 @@ All services are accessible on the local network. For remote access, use your **
 -----
 
 ## Screenshots [The Rice]
-
-![screenshot](fastfetch.png)
 ![screenshot](btop.png)
 ![screenshot](containers.png)
 
