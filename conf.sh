@@ -1,78 +1,137 @@
 #!/bin/bash
 
-# --- CONFIGURATION ---
+# Variables & Path Configuration
+SETUP_DIR="/mnt/sda1/setup"
+NEXTCLOUD_BASE="/mnt/sda1/nextcloud"
+AI_BASE="/mnt/sda1/ai"
+SYNCTHING_BASE="/mnt/sda1/syncthing"
+SSD_MOUNT="/home/nilay/nextcloud_ssd"
 USER_NAME="nilay"
-SETUP_DIR="/mnt/data/nextcloud-setup"
-DATA_DIR="/mnt/data"
-PORTS=(8080 3000 9091 3001 8663)
 
-echo "--- PHASE 1: Dependency Setup ---"
+echo "Initializing Automated Server Setup"
 
-# Install Docker
-if ! command -v docker &> /dev/null
-then
-    echo "Installing Docker..."
-    sudo dnf -y install dnf-plugins-core
-    sudo dnf config-manager --add-repo https://download.docker.com/linux/fedora/docker-ce.repo
-    sudo dnf install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
-    sudo systemctl enable docker
-    sudo systemctl start docker
-    
-    sudo usermod -aG docker ${USER_NAME}
-    
-    echo "Docker installed. User added to 'docker' group."
-    echo "Move the docker-compose.yml file to /mnt/data/nextcloud-setup. You must log out and log back in for new permissions to take effect. Rerun the script afterwards."
-    exit 1
-fi
+# Create Directory Structure
+echo "Mapping data directories"
+sudo mkdir -p $SETUP_DIR
+sudo mkdir -p $NEXTCLOUD_BASE/{db,html,data}
+sudo mkdir -p $AI_BASE/{ollama,open-webui}
+sudo mkdir -p $SYNCTHING_BASE/{config,data}
+mkdir -p $SSD_MOUNT
 
-# Install and Configure Tailscale
-if ! command -v tailscale &> /dev/null
-then
-    echo "Installing Tailscale..."
-    sudo dnf install -y tailscale
-    sudo systemctl enable --now tailscaled
-    echo "Run 'sudo tailscale up' and log in manually after setup is complete."
-fi
+# Systemd Login Settings
+sudo sed -i 's/^#HandleLidSwitch=.*/HandleLidSwitch=ignore/' /etc/systemd/logind.conf
+sudo sed -i 's/^#LidSwitchIgnoreInhibited=.*/LidSwitchIgnoreInhibited=no/' /etc/systemd/logind.conf
+sudo systemctl restart systemd-logind
 
-# Check data mount
-if [ ! -d "${SETUP_DIR}" ]; then
-    echo "ERROR: Setup directory ${SETUP_DIR} not found. Ensure HDD is mounted to /mnt/data."
-    exit 1
-fi
+# Install Docker & NVIDIA Runtime
+echo "Installing Docker Engine and NVIDIA Container Toolkit"
+sudo apt-get update && sudo apt-get install -y ca-certificates curl gnupg
+sudo install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg | sudo gpg --dearmor -o /etc/apt/keyrings/docker.gpg
+echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.gpg] https://download.docker.com/linux/ubuntu jammy stable" | sudo tee /etc/apt/sources.list.d/docker.list > /dev/null
+sudo apt-get update
+sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+# NVIDIA Toolkit for GPU Passthrough
+curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
+curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
+sudo apt-get update && sudo apt-get install -y nvidia-container-toolkit
+sudo nvidia-ctk runtime configure --runtime=docker
+sudo systemctl restart docker
 
-echo "--- PHASE 2: Permissions and Firewall ---"
+# Permissions & Ownership
+sudo chown -R 33:33 $NEXTCLOUD_BASE/data
+sudo chown -R 33:33 $NEXTCLOUD_BASE/html
+sudo chown -R 33:33 $SSD_MOUNT
+sudo chmod +x /home/$USER_NAME
+sudo usermod -aG docker $USER_NAME
 
-# Fix volume permissions
-echo "Setting file ownership for ${DATA_DIR}..."
-sudo chown -R ${USER_NAME}:${USER_NAME} ${DATA_DIR}
+# Ollama Keepalive
+echo "Adding 24h GPU keepalive to crontab"
+(crontab -l 2>/dev/null; echo "0 3 * * * docker exec ollama ollama run llama3.2 --keepalive 24h") | crontab -
 
-# Configure FirewallD
-echo "Configuring FirewallD..."
-for PORT in "${PORTS[@]}"; do
-    if ! sudo firewall-cmd --query-port=${PORT}/tcp &> /dev/null; then
-        sudo firewall-cmd --permanent --add-port=${PORT}/tcp
-        echo "Added port ${PORT}/tcp."
-    fi
-done
+# Generate Docker Compose File
+echo "Writing docker-compose.yml..."
+cat <<EOF > $SETUP_DIR/docker-compose.yml
+version: '3.8'
+services:
+  db:
+    image: mariadb:10.6
+    container_name: nextcloud-setup-db-1
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - $NEXTCLOUD_BASE/db:/var/lib/mysql
+    environment:
+      - MYSQL_ROOT_PASSWORD=strongpassword123
+      - MYSQL_PASSWORD=strongpassword123
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
 
-sudo firewall-cmd --reload
-echo "Firewall rules reloaded."
+  app:
+    image: nextcloud
+    container_name: nextcloud-setup-app-1
+    restart: always
+    ports:
+      - '8080:80'
+    volumes:
+      - $NEXTCLOUD_BASE/html:/var/www/html
+      - $NEXTCLOUD_BASE/data:/var/www/html/data
+      - $SSD_MOUNT:/var/www/html/data/nilayrakesh74@gmail.com/files/SSD_Storage
+    environment:
+      - MYSQL_PASSWORD=strongpassword123
+      - MYSQL_DATABASE=nextcloud
+      - MYSQL_USER=nextcloud
+      - MYSQL_HOST=db
+    depends_on:
+      - db
 
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    restart: always
+    ports:
+      - "11434:11434"
+    environment:
+      - OLLAMA_HOST=0.0.0.0:11434
+    volumes:
+      - $AI_BASE/ollama:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
 
-echo "--- PHASE 3: Launching Stack ---"
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - '3000:8080'
+    environment:
+      - OLLAMA_BASE_URL=http://ollama:11434
+    volumes:
+      - $AI_BASE/open-webui:/app/backend/data
+    depends_on:
+      - ollama
 
-# Change directory and launch Docker Compose
-cd "${SETUP_DIR}" || { echo "Failed to navigate to ${SETUP_DIR}."; exit 1; }
+  syncthing:
+    image: lscr.io/linuxserver/syncthing
+    container_name: syncthing
+    restart: unless-stopped
+    ports:
+      - "8384:8384"
+      - "22000:22000"
+      - "21027:21027/udp"
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Asia/Kolkata
+    volumes:
+      - $SYNCTHING_BASE/config:/config
+      - $SYNCTHING_BASE/data:/vault
+EOF
 
-echo "Launching services defined in docker-compose.yml..."
-sudo docker compose up -d
-
-if [ $? -eq 0 ]; then
-    echo ""
-    echo "------------------------------------------------------------------"
-    echo "Stack launched successfully."
-    echo "------------------------------------------------------------------"
-else
-    echo "ERROR: Docker Compose failed to start the stack."
-fi
+echo "Server Ready. Run 'cd $SETUP_DIR && docker compose up -d' to launch."
