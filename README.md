@@ -39,7 +39,7 @@ To easily migrate or restore the entire environment, use the provided `conf.sh` 
 
 ## Directory Structure (Host Volumes)
 
-All persistent data for the services are mapped to directories under `/mnt/data`:
+All persistent data for the services are mapped to directories under `/mnt/sda1`:
 
 | Host Path | Purpose |
 | :--- | :--- |
