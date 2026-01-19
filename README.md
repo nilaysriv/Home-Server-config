@@ -13,6 +13,7 @@ All services are run via Docker Compose and are configured to communicate over t
 | **Syncthing [For Obsidian]** | `syncthing` | `8384` | File Sync and Obsidian Vault set up (HTTP) |
 | **Ollama** | `ollama` | Internal | Local AI Model Backend | Operational |
 | **KIWIX Server** | `kiwix` | `8081` | Offline Wikipedia and Arch Wiki vault |
+| **Cockpit** | `kiwix` | `8081` | Managing Server from web browser |
 
 
 -----
@@ -61,6 +62,7 @@ All services are accessible on the local network. For remote access, use your **
 | **Nextcloud** | `http://<ip-address>:8080` | Use your Nextcloud user credentials. |
 | **AI Chatbot** | `http://<ip-address>:3000` | Log in with Open WebUI admin credentials. |
 | **Kiwix** | `http://<ip-address>:8081` | Kiwix access page. |
+| **Cockpit** | `http://<ip-address>:9090` | Cockpit for accessing server |
 
 -----
 

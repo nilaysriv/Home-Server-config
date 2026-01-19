@@ -18,7 +18,6 @@ sudo mkdir -p $NEXTCLOUD_BASE/{db,html,data}
 sudo mkdir -p $AI_BASE/{ollama,open-webui}
 sudo mkdir -p $SYNCTHING_BASE/{config,data}
 sudo mkdir -p $KIWIX_DATA
-sudo chown -R $USER:$USER $KIWIX_DATA
 mkdir -p $SSD_MOUNT
 
 # Systemd Login Settings
@@ -57,6 +56,7 @@ sudo chown -R 33:33 $NEXTCLOUD_BASE/data
 sudo chown -R 33:33 $NEXTCLOUD_BASE/html
 sudo chown -R 33:33 $SSD_MOUNT
 sudo chmod +x /home/$USER_NAME
+sudo chown -R $USER:$USER $KIWIX_DATA
 sudo usermod -aG docker $USER_NAME
 
 
@@ -155,6 +155,17 @@ services:
       - /mnt/sda1/kiwix/data:/data
     command:
       - '*.zim'
+  cockpit:
+    image: quay.io/cockpit/ws
+    container_name: cockpit
+    restart: always
+    privileged: true
+    ports: [ "9090:9090" ]
+    volumes:
+      - /run/dbus:/run/dbus
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/shadow:/etc/shadow:ro
 EOF
 
 echo "Server Ready. Run 'cd $SETUP_DIR && docker compose up -d' to launch."

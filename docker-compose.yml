@@ -96,4 +96,16 @@ services:
       - /mnt/sda1/kiwix/data:/data
     command:
       - '*.zim'
-
+  # --- 7. Cockpit (Web-based Server Management) ---
+  cockpit:
+    image: quay.io/cockpit/ws
+    container_name: cockpit
+    restart: always
+    privileged: true
+    ports:
+      - '9090:9090'
+    volumes:
+      - /run/dbus:/run/dbus               # Allows Cockpit to talk to the host OS
+      - /etc/passwd:/etc/passwd:ro         # Allows you to login with your Mint user
+      - /etc/group:/etc/group:ro
+      - /etc/shadow:/etc/shadow:ro
