@@ -12,6 +12,8 @@ All services are run via Docker Compose and are configured to communicate over t
 | **AI Chatbot** | `open-webui` | `3000` | Local LLM Chat Interface | Operational (HTTP) |
 | **Syncthing [For Obsidian]** | `syncthing` | `8384` | File Sync and Obsidian Vault set up (HTTP) |
 | **Ollama** | `ollama` | Internal | Local AI Model Backend | Operational |
+| **KIWIX Server** | `kiwix` | `8081` | Offline Wikipedia and Arch Wiki vault |
+
 
 -----
 
@@ -61,6 +63,7 @@ All services are accessible on the local network. For remote access, use your **
 -----
 
 ## Screenshots [The Rice]
+![screenshot](fastfetch.png)
 ![screenshot](btop.png)
 ![screenshot](containers.png)
 
