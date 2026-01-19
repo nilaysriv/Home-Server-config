@@ -7,6 +7,7 @@ AI_BASE="/mnt/sda1/ai"
 SYNCTHING_BASE="/mnt/sda1/syncthing"
 SSD_MOUNT="/home/nilay/nextcloud_ssd"
 USER_NAME="nilay"
+KIWIX_DATA="/mnt/sda1/kiwix/data"
 
 echo "Initializing Automated Server Setup"
 
@@ -16,6 +17,8 @@ sudo mkdir -p $SETUP_DIR
 sudo mkdir -p $NEXTCLOUD_BASE/{db,html,data}
 sudo mkdir -p $AI_BASE/{ollama,open-webui}
 sudo mkdir -p $SYNCTHING_BASE/{config,data}
+sudo mkdir -p $KIWIX_DATA
+sudo chown -R $USER:$USER $KIWIX_DATA
 mkdir -p $SSD_MOUNT
 
 # Systemd Login Settings
@@ -32,6 +35,16 @@ echo "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.
 sudo apt-get update
 sudo apt-get install -y docker-ce docker-ce-cli containerd.io docker-compose-plugin
 
+# KIWIX Setup
+# Download Arch Wiki (Small - 30MB)
+if [ ! -f "$KIWIX_DATA/archlinux_en_all_maxi_2025-09.zim" ]; then
+    wget -c -P $KIWIX_DATA https://download.kiwix.org/zim/other/archlinux_en_all_maxi_2025-09.zim
+    wget -c -P $KIWIX_DATA https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_mini_2025-12.zim
+fi
+
+echo "Offline Wikibase Setup Complete."
+echo " To download the 11GB Wikipedia later, use: wget -c -P $KIWIX_DATA https://download.kiwix.org/zim/wikipedia/wikipedia_en_all_mini_2025-12.zim"
+
 # NVIDIA Toolkit for GPU Passthrough
 curl -fsSL https://nvidia.github.io/libnvidia-container/gpgkey | sudo gpg --dearmor -o /usr/share/keyrings/nvidia-container-toolkit-keyring.gpg
 curl -s -L https://nvidia.github.io/libnvidia-container/stable/deb/nvidia-container-toolkit.list | sed 's#deb https://#deb [signed-by=/usr/share/keyrings/nvidia-container-toolkit-keyring.gpg] https://#g' | sudo tee /etc/apt/sources.list.d/nvidia-container-toolkit.list
@@ -46,6 +59,7 @@ sudo chown -R 33:33 $SSD_MOUNT
 sudo chmod +x /home/$USER_NAME
 sudo usermod -aG docker $USER_NAME
 
+
 # Ollama Keepalive
 echo "Adding 24h GPU keepalive to crontab"
 (crontab -l 2>/dev/null; echo "0 3 * * * docker exec ollama ollama run llama3.2 --keepalive 24h") | crontab -
@@ -53,7 +67,6 @@ echo "Adding 24h GPU keepalive to crontab"
 # Generate Docker Compose File
 echo "Writing docker-compose.yml..."
 cat <<EOF > $SETUP_DIR/docker-compose.yml
-version: '3.8'
 services:
   db:
     image: mariadb:10.6
@@ -132,6 +145,16 @@ services:
     volumes:
       - $SYNCTHING_BASE/config:/config
       - $SYNCTHING_BASE/data:/vault
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix
+    restart: unless-stopped
+    ports:
+      - '8081:8080'
+    volumes:
+      - /mnt/sda1/kiwix/data:/data
+    command:
+      - '*.zim'
 EOF
 
 echo "Server Ready. Run 'cd $SETUP_DIR && docker compose up -d' to launch."
