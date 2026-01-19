@@ -1,6 +1,6 @@
 #  Nilay's Home Lab Stack
 
-This repository documents the setup and configuration for a fully functional, self-hosted Docker stack running on a Debian server. This stack provides private cloud storage, a local AI chat engine, Obsidian notes sync and Syncthing for file sharing.
+This repository documents the setup and configuration for a fully functional, self-hosted Docker stack running on a Debian server. This stack provides private cloud storage, a local AI chat engine, Obsidian notes sync, KIWIX offline wikipedia vault and Syncthing for file sharing.
 
 ## Services Overview
 
@@ -48,6 +48,8 @@ All persistent data for the services are mapped to directories under `/mnt/sda1`
 | `/mnt/sda1/nextcloud-setup` | Contains `docker-compose.yml` and `setup_my_stack.sh`. **The project root.** |
 | `/mnt/sda1/nextcloud/` | All Nextcloud files and database storage. |
 | `/mnt/sda1/ai/` | Stores Ollama models and Open WebUI user data. |
+| `/mnt/sda1/kiwix/` | Stores kiwix databases for wikipedia (English) and Arch Wiki. |
+
 
 ## Access Links
 
@@ -58,7 +60,7 @@ All services are accessible on the local network. For remote access, use your **
 | **Syncthing** | `http://<ip-address>:8384` | Syncthing for Obsidian vault and possible cloud saves for games |
 | **Nextcloud** | `http://<ip-address>:8080` | Use your Nextcloud user credentials. |
 | **AI Chatbot** | `http://<ip-address>:3000` | Log in with Open WebUI admin credentials. |
-| **Cockpit (OS Mgmt)** | `http://<ip-address>:9090` | Fedora Server Management. |
+| **Kiwix** | `http://<ip-address>:8081` | Kiwix access page. |
 
 -----
 
