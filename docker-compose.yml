@@ -1,5 +1,4 @@
-nilay@nilay-server:/mnt/sda1/setup$ cat docker-compose.yml 
-version: '3.8'
+#version: '3.8'
 
 services:
 
@@ -86,3 +85,15 @@ services:
     volumes:
       - /mnt/sda1/syncthing/config:/config
       - /mnt/sda1/syncthing/data:/vault
+  # --- 6. Kiwix (Offline Wikipedia & Arch Wiki) ---
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix
+    restart: unless-stopped
+    ports:
+      - '8081:8080' 
+    volumes:
+      - /mnt/sda1/kiwix/data:/data
+    command:
+      - '*.zim'
+
