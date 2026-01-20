@@ -1,90 +1,160 @@
-#  Nilay's Home Lab Stack
+# Nilay’s Home Lab Stack
 
-This repository documents the setup and configuration for a fully functional, self-hosted Docker stack running on a Debian server. This stack provides private cloud storage, a local AI chat engine, Obsidian notes sync, KIWIX offline wikipedia vault and Syncthing for file sharing.
+This repository documents the setup and configuration of a **fully self-hosted Docker homelab** running on a Debian/Ubuntu-based server.
+
+The stack provides:
+- Private cloud storage
+- Local AI inference and chat UI
+- Offline knowledge base (Wikipedia + Arch Wiki)
+- Photo management (Immich)
+- Media streaming
+- Document editing (ONLYOFFICE)
+- File sync (Syncthing)
+- Server management (Cockpit)
+
+All services are orchestrated using **Docker Compose** and communicate over a single internal Docker bridge network.
+
+External access is currently handled via **direct HTTP ports** (no reverse proxy yet).
+
+---
 
 ## Services Overview
 
-All services are run via Docker Compose and are configured to communicate over the internal Docker network. External access is currently handled via direct **HTTP ports**.
+| Service | Container Name | Host Port | Purpose | Status |
+|------|------|------|------|------|
+| **Nextcloud** | `nextcloud-setup-app-1` | `8080` | Private cloud storage & file sync | ✅ Operational |
+| **ONLYOFFICE** | `onlyoffice` | `8082` | Document editing for Nextcloud | ✅ Integrated |
+| **Immich** | `immich_server` | `2283` | Self-hosted photo & video backup | ✅ Operational |
+| **Jellyfin** | `jellyfin` | `8096` | Media streaming server | ✅ Operational |
+| **Open WebUI** | `open-webui` | `3000` | Local LLM chat interface | ✅ Operational |
+| **Ollama** | `ollama` | `11434` (API) | Local AI model backend | ✅ Operational |
+| **Syncthing** | `syncthing` | `8384` | Obsidian vault & file sync | ✅ Operational |
+| **KIWIX** | `kiwix` | `8081` | Offline Wikipedia & Arch Wiki | ✅ Operational |
+| **FreshRSS** | `freshrss` | `8083` | RSS feed reader | ✅ Operational |
+| **Cockpit** | `cockpit` | `9090` | Web-based server management | ✅ Operational |
+| **Samba** | `samba` | `139 / 445` | LAN file sharing | ✅ Operational |
 
-| Service | Container Name | Host Port | Function | Status |
-| :--- | :--- | :--- | :--- | :--- |
-| **Nextcloud** | `nextcloud-setup-app-1` | `8080` | Private Cloud Storage | Operational (HTTP) |
-| **AI Chatbot** | `open-webui` | `3000` | Local LLM Chat Interface | Operational (HTTP) |
-| **Syncthing [For Obsidian]** | `syncthing` | `8384` | File Sync and Obsidian Vault set up (HTTP) |
-| **Ollama** | `ollama` | Internal | Local AI Model Backend | Operational |
-| **KIWIX Server** | `kiwix` | `8081` | Offline Wikipedia and Arch Wiki vault |
-| **Cockpit** | `kiwix` | `8081` | Managing Server from web browser |
-
-
------
+---
 
 ## Prerequisites
 
-Before launching the stack on a new machine, ensure the following are installed and configured:
+Before deploying this stack on a new machine, ensure:
 
-1.  **Operating System:** Debian/Ubuntu/Linux Mint
-2.  **Docker & Compose:** Docker Engine and Docker Compose Plugin installed.
-3.  **Tailscale:** Installed and running (for secure remote access).
-4.  **Data Drive:** The primary data drive **must be mounted to `/mnt/sda1`**.
+1. **Operating System**  
+   Debian / Ubuntu / Linux Mint (tested on Debian-based systems)
 
-## The "One-Click" Setup Script
+2. **Docker**
+   - Docker Engine
+   - Docker Compose plugin
 
-To easily migrate or restore the entire environment, use the provided `conf.sh` script.
+3. **NVIDIA GPU (Optional but recommended)**
+   - NVIDIA drivers installed
+   - `nvidia-container-toolkit` configured
 
-**Steps:**
+4. **Tailscale**
+   - Installed and running (used for secure remote access)
 
-1.  Clone this repository to your new machine.
-2.  Ensure your data drive is mounted at `/mnt/sda1`.
-3.  Give the script execution permission: `chmod +x conf.sh`
-4.  Run the script: `./conf.sh`
+5. **Data Drive**
+   - Primary data drive **must be mounted at `/mnt/sda1`**
 
------
+---
+
+## One-Click Setup Script
+
+The entire stack can be deployed using the provided **`conf.sh`** script.
+
+### What the script does
+- Installs Docker + NVIDIA runtime
+- Creates all required directories
+- Fixes permissions
+- Writes a production-ready `docker-compose.yml`
+- Avoids IPv6 / proxy / port binding issues
+- Requires **zero manual editing**
+
+### Usage
+
+```bash
+git clone <this-repo>
+cd <this-repo>
+chmod +x conf.sh
+./conf.sh
+````
+
+After completion:
+
+```bash
+cd /mnt/sda1/setup
+docker compose up -d
+```
+
+---
 
 ## Directory Structure (Host Volumes)
 
-All persistent data for the services are mapped to directories under `/mnt/sda1`:
+All persistent data lives under `/mnt/sda1`:
 
-| Host Path | Purpose |
-| :--- | :--- |
-| `/mnt/sda1/nextcloud-setup` | Contains `docker-compose.yml` and `setup_my_stack.sh`. **The project root.** |
-| `/mnt/sda1/nextcloud/` | All Nextcloud files and database storage. |
-| `/mnt/sda1/ai/` | Stores Ollama models and Open WebUI user data. |
-| `/mnt/sda1/kiwix/` | Stores kiwix databases for wikipedia (English) and Arch Wiki. |
+| Host Path                    | Purpose                         |
+| ---------------------------- | ------------------------------- |
+| `/mnt/sda1/setup/`           | Docker Compose files & config   |
+| `/mnt/sda1/nextcloud/`       | Nextcloud app + database        |
+| `/mnt/sda1/ai/`              | Ollama models & Open WebUI data |
+| `/mnt/sda1/immich/`          | Immich photos, DB, ML cache     |
+| `/mnt/sda1/onlyoffice/`      | ONLYOFFICE data & cache         |
+| `/mnt/sda1/jellyfin/`        | Jellyfin config & cache         |
+| `/mnt/sda1/kiwix/`           | Offline Wikipedia & Arch Wiki   |
+| `/mnt/sda1/syncthing/`       | Syncthing config & vault        |
+| `/mnt/sda1/freshrss/`        | FreshRSS data                   |
+| `/home/nilay/nextcloud_ssd/` | SSD-backed Nextcloud storage    |
 
+---
 
 ## Access Links
 
-All services are accessible on the local network. For remote access, use your **Tailscale IP** or **Tailscale Hostname**.
+Use **local IP** or **Tailscale IP / hostname**.
 
-| Service | URL (Local/Tailscale) | Login/Notes |
-| :--- | :--- | :--- |
-| **Syncthing** | `http://<ip-address>:8384` | Syncthing for Obsidian vault and possible cloud saves for games |
-| **Nextcloud** | `http://<ip-address>:8080` | Use your Nextcloud user credentials. |
-| **AI Chatbot** | `http://<ip-address>:3000` | Log in with Open WebUI admin credentials. |
-| **Kiwix** | `http://<ip-address>:8081` | Kiwix access page. |
-| **Cockpit** | `http://<ip-address>:9090` | Cockpit for accessing server |
+| Service    | URL                |
+| ---------- | ------------------ |
+| Nextcloud  | `http://<ip>:8080` |
+| ONLYOFFICE | `http://<ip>:8082` |
+| Immich     | `http://<ip>:2283` |
+| Jellyfin   | `http://<ip>:8096` |
+| Open WebUI | `http://<ip>:3000` |
+| Syncthing  | `http://<ip>:8384` |
+| KIWIX      | `http://<ip>:8081` |
+| FreshRSS   | `http://<ip>:8083` |
+| Cockpit    | `http://<ip>:9090` |
 
------
-
-## Screenshots [The Rice]
-![screenshot](fastfetch.png)
-![screenshot](btop.png)
-![screenshot](containers.png)
+---
 
 ## Key Configuration Files
 
-The entire stack is defined in the single **`docker-compose.yml`** file located in the root of this project.
+* **`docker-compose.yml`**
+  Defines the entire stack (single network, fixed ports, safe defaults)
 
-### Nextcloud Fixes
+* **`conf.sh`**
+  Fully reproducible system bootstrap script
 
-Due to previous reverse proxy testing, if Nextcloud fails to log in, you must use these commands to clear stale settings:
+---
+
+## Nextcloud Maintenance Notes
+
+If Nextcloud login or file operations break (usually after proxy testing), run:
 
 ```bash
-# Clear file locks (useful after mobile app issues)
-sudo docker exec nextcloud-setup-db-1 mysql -u root -pstrongpassword123 -e "DELETE FROM nextcloud.oc_file_locks WHERE 1;"
+# Clear file locks
+docker exec nextcloud-setup-db-1 \
+  mysql -u root -pstrongpassword123 \
+  -e "DELETE FROM nextcloud.oc_file_locks WHERE 1;"
 
-# Reset proxy and protocol settings (run after any proxy issues)
-sudo docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete overwriteprotocol
-sudo docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete trusted_proxies
+# Remove stale proxy settings
+docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete overwriteprotocol
+docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete trusted_proxies
 ```
 
+---
+
+## Screenshots / Rice
+
+![fastfetch](fastfetch.png)
+![btop](btop.png)
+![containers](containers.png)
