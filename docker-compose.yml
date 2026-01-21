@@ -1,11 +1,8 @@
-# version: '3.8'
-
 networks:
   nilay-net:
     driver: bridge
 
 services:
-
   # --- 1. Nextcloud Database ---
   db:
     image: mariadb:10.6
@@ -32,7 +29,6 @@ services:
     volumes:
       - /mnt/sda1/nextcloud/html:/var/www/html
       - /mnt/sda1/nextcloud/data:/var/www/html/data
-      # --- METHOD 1: Mapping SSD (Boot Drive) into Nextcloud ---
       - /home/nilay/nextcloud_ssd:/var/www/html/data/nilayrakesh74@gmail.com/files/SSD_Storage
     environment:
       MYSQL_PASSWORD: strongpassword123
@@ -44,7 +40,7 @@ services:
     networks:
       - nilay-net
 
-  # --- 3. AI Chatbot Backend (Ollama) ---
+  # --- 3. Ollama ---
   ollama:
     image: ollama/ollama
     container_name: ollama
@@ -65,7 +61,7 @@ services:
     networks:
       - nilay-net
 
-  # --- 4. AI Chatbot Frontend (Open-WebUI) ---
+  # --- 4. Open-WebUI ---
   open-webui:
     image: ghcr.io/open-webui/open-webui:main
     container_name: open-webui
@@ -81,7 +77,7 @@ services:
     networks:
       - nilay-net
 
-  # --- 5. Syncthing (Obsidian Vault Sync) ---
+  # --- 5. Syncthing ---
   syncthing:
     image: lscr.io/linuxserver/syncthing
     container_name: syncthing
@@ -100,7 +96,7 @@ services:
     networks:
       - nilay-net
 
-  # --- 6. Kiwix (Offline Wikipedia & Arch Wiki) ---
+  # --- 6. Kiwix ---
   kiwix:
     image: ghcr.io/kiwix/kiwix-serve:latest
     container_name: kiwix
@@ -109,12 +105,11 @@ services:
       - "8081:8080"
     volumes:
       - /mnt/sda1/kiwix/data:/data
-    command:
-      - "*.zim"
+    command: ["*.zim"]
     networks:
       - nilay-net
 
-  # --- 7. Cockpit (Web-based Server Management) ---
+  # --- 7. Cockpit ---
   cockpit:
     image: quay.io/cockpit/ws
     container_name: cockpit
@@ -123,7 +118,7 @@ services:
     ports:
       - "9090:9090"
     volumes:
-      - /run/dbus:/run/dbus
+      - /run/dbus:/run/dbus:ro
       - /etc/passwd:/etc/passwd:ro
       - /etc/group:/etc/group:ro
       - /etc/shadow:/etc/shadow:ro
@@ -131,7 +126,24 @@ services:
     networks:
       - nilay-net
 
-  # --- 8. ONLYOFFICE ---
+  # --- 8. Jellyfin ---
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "8096:8096"
+    volumes:
+      - /mnt/sda1/jellyfin/config:/config
+      - /mnt/sda1/jellyfin/cache:/cache
+      - /mnt/sda1:/media
+    environment:
+      PUID: 1000
+      PGID: 1000
+    networks:
+      - nilay-net
+
+  # --- 9. ONLYOFFICE ---
   onlyoffice:
     image: onlyoffice/documentserver:latest
     container_name: onlyoffice
@@ -152,13 +164,27 @@ services:
     networks:
       - nilay-net
 
-  # --- 9. IMMICH (Photos – FIXED) ---
+  # --- 10. FreshRSS ---
+  freshrss:
+    image: freshrss/freshrss
+    container_name: freshrss
+    restart: unless-stopped
+    ports:
+      - "8083:80"
+    environment:
+      PUID: 1000
+      PGID: 1000
+      TZ: Asia/Kolkata
+    volumes:
+      - /mnt/sda1/freshrss/data:/var/www/FreshRSS/data
+    networks:
+      - nilay-net
+
+  # --- 11. IMMICH ---
   immich-server:
     image: ghcr.io/immich-app/immich-server:release
     container_name: immich_server
     restart: always
-    ports:
-      - "2283:2283"
     environment:
       DB_HOSTNAME: immich-postgres
       DB_USERNAME: postgres
@@ -171,6 +197,8 @@ services:
     volumes:
       - /mnt/sda1/immich/library:/usr/src/app/upload
       - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "2283:2283"
     depends_on:
       - immich-postgres
       - immich-redis
@@ -190,13 +218,19 @@ services:
       - nilay-net
 
   immich-machine-learning:
-    image: ghcr.io/immich-app/immich-machine-learning:release
     container_name: immich_machine_learning
+    image: ghcr.io/immich-app/immich-machine-learning:release
     restart: always
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
     volumes:
       - /mnt/sda1/immich/model-cache:/cache
     networks:
       - nilay-net
+
+
 
   immich-postgres:
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
@@ -215,5 +249,53 @@ services:
     image: redis:6.2-alpine
     container_name: immich_redis
     restart: always
+    networks:
+      - nilay-net
+
+  # --- 12. Samba ---
+  samba:
+    image: dperson/samba
+    container_name: samba
+    restart: always
+    ports:
+      - "139:139"
+      - "445:445"
+    volumes:
+      - /mnt/sda1:/mnt/sda1
+    command: >
+      -u "nilay;strongpassword123"
+      -s "HomeServer;/mnt/sda1;yes;no;no;nilay"
+    networks:
+      - nilay-net
+
+  # --- 13. Portainer (Docker Management UI) ---
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "9000:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - /mnt/sda1/portainer:/data
+    networks:
+      - nilay-net
+
+  # -- 14. Minecraft Server ---
+  minecraft:
+    image: itzg/minecraft-server
+    container_name: minecraft-server
+    restart: unless-stopped
+    ports:
+      - "25565:25565" 
+    environment:
+      EULA: "TRUE"
+      TYPE: "PAPER"       
+      VERSION: "LATEST"
+      MEMORY: "4G"        # Adjust based on your available RAM
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: "strongpassword123"
+    volumes:
+      - /mnt/sda1/minecraft/data:/data
     networks:
       - nilay-net
