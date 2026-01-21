@@ -57,7 +57,7 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
+              capabilities: [ gpu ]
     networks:
       - nilay-net
 
@@ -105,7 +105,7 @@ services:
       - "8081:8080"
     volumes:
       - /mnt/sda1/kiwix/data:/data
-    command: ["*.zim"]
+    command: [ "*.zim" ]
     networks:
       - nilay-net
 
@@ -230,8 +230,6 @@ services:
     networks:
       - nilay-net
 
-
-
   immich-postgres:
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
     container_name: immich_postgres
@@ -263,8 +261,7 @@ services:
     volumes:
       - /mnt/sda1:/mnt/sda1
     command: >
-      -u "nilay;strongpassword123"
-      -s "HomeServer;/mnt/sda1;yes;no;no;nilay"
+      -u "nilay;strongpassword123" -s "HomeServer;/mnt/sda1;yes;no;no;nilay"
     networks:
       - nilay-net
 
@@ -287,12 +284,13 @@ services:
     container_name: minecraft-server
     restart: unless-stopped
     ports:
-      - "25565:25565" 
+      - "25565:25565"
     environment:
       EULA: "TRUE"
-      TYPE: "PAPER"       
+      ONLINE_MODE: "FALSE"
+      TYPE: "PAPER"
       VERSION: "LATEST"
-      MEMORY: "4G"        # Adjust based on your available RAM
+      MEMORY: "4G" # Adjust based on your available RAM
       ENABLE_RCON: "true"
       RCON_PASSWORD: "strongpassword123"
     volumes:

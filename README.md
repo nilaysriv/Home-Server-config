@@ -33,6 +33,8 @@ External access is currently handled via **direct HTTP ports** (no reverse proxy
 | **FreshRSS** | `freshrss` | `8083` | RSS feed reader | ✅ Operational |
 | **Cockpit** | `cockpit` | `9090` | Web-based server management | ✅ Operational |
 | **Samba** | `samba` | `139 / 445` | LAN file sharing | ✅ Operational |
+| **Portainer** | `portainer` | `9000` | Docker management UI | ✅ Operational |
+| **Minecraft** | `minecraft-server` | `25565` | Minecraft Java server (Paper) | ✅ Operational |
 
 ---
 
@@ -104,6 +106,8 @@ All persistent data lives under `/mnt/sda1`:
 | `/mnt/sda1/kiwix/`           | Offline Wikipedia & Arch Wiki   |
 | `/mnt/sda1/syncthing/`       | Syncthing config & vault        |
 | `/mnt/sda1/freshrss/`        | FreshRSS data                   |
+| `/mnt/sda1/portainer/`       | Portainer configuration         |
+| `/mnt/sda1/minecraft/`       | Minecraft server data           |
 | `/home/nilay/nextcloud_ssd/` | SSD-backed Nextcloud storage    |
 
 ---
@@ -123,6 +127,7 @@ Use **local IP** or **Tailscale IP / hostname**.
 | KIWIX      | `http://<ip>:8081` |
 | FreshRSS   | `http://<ip>:8083` |
 | Cockpit    | `http://<ip>:9090` |
+| Portainer  | `http://<ip>:9000` |
 
 ---
 
