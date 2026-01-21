@@ -158,6 +158,31 @@ docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete t
 
 ---
 
+## Documentation Links
+
+Official documentation for all services in this stack:
+
+| Service | Documentation URL |
+|---------|------------------|
+| **Nextcloud** | https://docs.nextcloud.com/server/latest/admin_manual/ |
+| **MariaDB** | https://mariadb.com/kb/en/documentation/ |
+| **ONLYOFFICE** | https://helpcenter.onlyoffice.com/installation/docs-community-install-docker.aspx |
+| **Immich** | https://immich.app/docs/overview/introduction |
+| **Jellyfin** | https://jellyfin.org/docs/ |
+| **Ollama** | https://github.com/ollama/ollama/blob/main/README.md |
+| **Open WebUI** | https://docs.openwebui.com/ |
+| **Syncthing** | https://docs.syncthing.net/ |
+| **Kiwix** | https://wiki.kiwix.org/wiki/Main_Page |
+| **FreshRSS** | https://freshrss.github.io/FreshRSS/en/ |
+| **Cockpit** | https://cockpit-project.org/guide/latest/ |
+| **Samba** | https://www.samba.org/samba/docs/ |
+| **Portainer** | https://docs.portainer.io/ |
+| **Minecraft Server** | https://docker-minecraft-server.readthedocs.io/en/latest/ |
+| **Docker** | https://docs.docker.com/ |
+| **NVIDIA Container Toolkit** | https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html |
+
+---
+
 ## Screenshots / Rice
 
 ![fastfetch](fastfetch.png)
