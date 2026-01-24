@@ -3,36 +3,38 @@
 This repository documents the setup and configuration of a **fully self-hosted Docker homelab** running on a Debian/Ubuntu-based server.
 
 The stack provides:
-- Private cloud storage
-- Local AI inference and chat UI
-- Offline knowledge base (Wikipedia + Arch Wiki)
-- Photo management (Immich)
-- Media streaming
-- Document editing (ONLYOFFICE)
-- File sync (Syncthing)
-- Server management (Cockpit)
 
-All services are orchestrated using **Docker Compose** and communicate over a single internal Docker bridge network.
+* **Private Cloud:** Nextcloud (Storage), Linkwarden (Bookmarks), Vaultwarden (Passwords)
+* **AI & Intelligence:** Ollama (Backend), Open WebUI (Frontend)
+* **Media & Content:** Jellyfin (Streaming), Immich (Photos), FreshRSS (Feeds), Kiwix (Offline Wiki)
+* **Productivity:** ONLYOFFICE (Docs), Stirling PDF (PDF Tools), Syncthing (Sync)
+* **System & Tools:** Cockpit, Portainer, Glance, Speedtest Tracker, SearXNG
 
-External access is currently handled via **direct HTTP ports** (no reverse proxy yet).
+All services are orchestrated using **Docker Compose** with environment variables managed via a `.env` file for security and portability.
 
 ---
 
 ## Services Overview
 
 | Service | Container Name | Host Port | Purpose | Status |
-|------|------|------|------|------|
+| --- | --- | --- | --- | --- |
 | **Nextcloud** | `nextcloud-setup-app-1` | `8080` | Private cloud storage & file sync | ✅ Operational |
 | **ONLYOFFICE** | `onlyoffice` | `8082` | Document editing for Nextcloud | ✅ Integrated |
 | **Immich** | `immich_server` | `2283` | Self-hosted photo & video backup | ✅ Operational |
 | **Jellyfin** | `jellyfin` | `8096` | Media streaming server | ✅ Operational |
 | **Open WebUI** | `open-webui` | `3000` | Local LLM chat interface | ✅ Operational |
 | **Ollama** | `ollama` | `11434` (API) | Local AI model backend | ✅ Operational |
+| **Glance** | `glance` | `8084` | Startpage / Dashboard | ✅ Operational |
+| **Vaultwarden** | `vaultwarden` | `8085` | Password Manager (Bitwarden) | ✅ Operational |
+| **Stirling PDF** | `stirling-pdf` | `8086` | PDF Manipulation Tools | ✅ Operational |
+| **Speedtest** | `speedtest-tracker` | `8087` | Internet speed tracking history | ✅ Operational |
+| **SearXNG** | `searxng` | `8088` | Privacy-respecting metasearch | ✅ Operational |
+| **Linkwarden** | `linkwarden` | `8089` | Bookmark & Web Archive manager | ✅ Operational |
 | **Syncthing** | `syncthing` | `8384` | Obsidian vault & file sync | ✅ Operational |
 | **KIWIX** | `kiwix` | `8081` | Offline Wikipedia & Arch Wiki | ✅ Operational |
 | **FreshRSS** | `freshrss` | `8083` | RSS feed reader | ✅ Operational |
 | **Cockpit** | `cockpit` | `9090` | Web-based server management | ✅ Operational |
-| **Samba** | `samba` | `139 / 445` | LAN file sharing | ✅ Operational |
+| **Samba** | `samba` | `445` | LAN file sharing | ✅ Operational |
 | **Portainer** | `portainer` | `9000` | Docker management UI | ✅ Operational |
 | **Minecraft** | `minecraft-server` | `25565` | Minecraft Java server (Paper) | ✅ Operational |
 
@@ -42,73 +44,76 @@ External access is currently handled via **direct HTTP ports** (no reverse proxy
 
 Before deploying this stack on a new machine, ensure:
 
-1. **Operating System**  
-   Debian / Ubuntu / Linux Mint (tested on Debian-based systems)
-
+1. **Operating System** Debian / Ubuntu / Linux Mint (tested on Debian-based systems)
 2. **Docker**
-   - Docker Engine
-   - Docker Compose plugin
+* Docker Engine installed
+* Docker Compose plugin installed
 
-3. **NVIDIA GPU (Optional but recommended)**
-   - NVIDIA drivers installed
-   - `nvidia-container-toolkit` configured
 
-4. **Tailscale**
-   - Installed and running (used for secure remote access)
+3. **NVIDIA GPU (Recommended)**
+* NVIDIA drivers installed
+* `nvidia-container-toolkit` configured (required for Immich ML & Ollama)
 
-5. **Data Drive**
-   - Primary data drive **must be mounted at `/mnt/sda1`**
+
+4. **Data Drive**
+* Primary data drive **must be mounted at `/mnt/sda1**`
+
+
 
 ---
 
-## One-Click Setup Script
+## Installation & Setup
 
-The entire stack can be deployed using the provided **`conf.sh`** script.
+This stack uses a `.env` file to manage configuration, ensuring secrets are not hardcoded.
 
-### What the script does
-- Installs Docker + NVIDIA runtime
-- Creates all required directories
-- Fixes permissions
-- Writes a production-ready `docker-compose.yml`
-- Avoids IPv6 / proxy / port binding issues
-- Requires **zero manual editing**
-
-### Usage
-
+1. **Clone the Repository**
 ```bash
 git clone <this-repo>
 cd <this-repo>
-chmod +x conf.sh
-./conf.sh
-````
 
-After completion:
-
-```bash
-cd /mnt/sda1/setup
-docker compose up -d
 ```
+
+
+2. **Configure Environment Variables**
+Copy the example file to a production file:
+```bash
+cp .env.example .env
+
+```
+
+
+*Edit the `.env` file to set your passwords, specific paths, and generated keys.*
+3. **Deploy the Stack**
+```bash
+docker compose up -d
+
+```
+
+
 
 ---
 
 ## Directory Structure (Host Volumes)
 
-All persistent data lives under `/mnt/sda1`:
+All persistent data lives under `/mnt/sda1`. The exact paths are configurable in `.env`, but default to:
 
-| Host Path                    | Purpose                         |
-| ---------------------------- | ------------------------------- |
-| `/mnt/sda1/setup/`           | Docker Compose files & config   |
-| `/mnt/sda1/nextcloud/`       | Nextcloud app + database        |
-| `/mnt/sda1/ai/`              | Ollama models & Open WebUI data |
-| `/mnt/sda1/immich/`          | Immich photos, DB, ML cache     |
-| `/mnt/sda1/onlyoffice/`      | ONLYOFFICE data & cache         |
-| `/mnt/sda1/jellyfin/`        | Jellyfin config & cache         |
-| `/mnt/sda1/kiwix/`           | Offline Wikipedia & Arch Wiki   |
-| `/mnt/sda1/syncthing/`       | Syncthing config & vault        |
-| `/mnt/sda1/freshrss/`        | FreshRSS data                   |
-| `/mnt/sda1/portainer/`       | Portainer configuration         |
-| `/mnt/sda1/minecraft/`       | Minecraft server data           |
-| `/home/nilay/nextcloud_ssd/` | SSD-backed Nextcloud storage    |
+| Host Path | Service Data |
+| --- | --- |
+| `/mnt/sda1/setup/` | Docker Compose files & config |
+| `/mnt/sda1/nextcloud/` | Nextcloud app + database |
+| `/mnt/sda1/ai/` | Ollama models & Open WebUI data |
+| `/mnt/sda1/immich/` | Immich photos, DB, ML cache |
+| `/mnt/sda1/onlyoffice/` | ONLYOFFICE data & cache |
+| `/mnt/sda1/jellyfin/` | Jellyfin config & cache |
+| `/mnt/sda1/vaultwarden/` | Vaultwarden database |
+| `/mnt/sda1/linkwarden/` | Linkwarden data & DB |
+| `/mnt/sda1/stirling-pdf/` | Stirling PDF configs & logs |
+| `/mnt/sda1/speedtest/` | Speedtest Tracker history |
+| `/mnt/sda1/searxng/` | SearXNG config |
+| `/mnt/sda1/syncthing/` | Syncthing config & vault |
+| `/mnt/sda1/freshrss/` | FreshRSS data |
+| `/mnt/sda1/glance/` | Glance dashboard config |
+| `/mnt/sda1/minecraft/` | Minecraft server data |
 
 ---
 
@@ -116,28 +121,21 @@ All persistent data lives under `/mnt/sda1`:
 
 Use **local IP** or **Tailscale IP / hostname**.
 
-| Service    | URL                |
-| ---------- | ------------------ |
-| Nextcloud  | `http://<ip>:8080` |
-| ONLYOFFICE | `http://<ip>:8082` |
-| Immich     | `http://<ip>:2283` |
-| Jellyfin   | `http://<ip>:8096` |
-| Open WebUI | `http://<ip>:3000` |
-| Syncthing  | `http://<ip>:8384` |
-| KIWIX      | `http://<ip>:8081` |
-| FreshRSS   | `http://<ip>:8083` |
-| Cockpit    | `http://<ip>:9090` |
-| Portainer  | `http://<ip>:9000` |
-
----
-
-## Key Configuration Files
-
-* **`docker-compose.yml`**
-  Defines the entire stack (single network, fixed ports, safe defaults)
-
-* **`conf.sh`**
-  Fully reproducible system bootstrap script
+| Service | URL |
+| --- | --- |
+| **Nextcloud** | `http://<ip>:8080` |
+| **ONLYOFFICE** | `http://<ip>:8082` |
+| **Immich** | `http://<ip>:2283` |
+| **Jellyfin** | `http://<ip>:8096` |
+| **Open WebUI** | `http://<ip>:3000` |
+| **Glance (Dashboard)** | `http://<ip>:8084` |
+| **Vaultwarden** | `http://<ip>:8085` |
+| **Stirling PDF** | `http://<ip>:8086` |
+| **Speedtest** | `http://<ip>:8087` |
+| **SearXNG** | `http://<ip>:8088` |
+| **Linkwarden** | `http://<ip>:8089` |
+| **Cockpit** | `http://<ip>:9090` |
+| **Portainer** | `http://<ip>:9000` |
 
 ---
 
@@ -148,38 +146,33 @@ If Nextcloud login or file operations break (usually after proxy testing), run:
 ```bash
 # Clear file locks
 docker exec nextcloud-setup-db-1 \
-  mysql -u root -pstrongpassword123 \
+  mysql -u root -p${NEXTCLOUD_DB_ROOT_PASSWORD} \
   -e "DELETE FROM nextcloud.oc_file_locks WHERE 1;"
 
 # Remove stale proxy settings
 docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete overwriteprotocol
 docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete trusted_proxies
+
 ```
 
 ---
 
 ## Documentation Links
 
-Official documentation for all services in this stack:
-
 | Service | Documentation URL |
-|---------|------------------|
-| **Nextcloud** | https://docs.nextcloud.com/server/latest/admin_manual/ |
-| **MariaDB** | https://mariadb.com/kb/en/documentation/ |
-| **ONLYOFFICE** | https://helpcenter.onlyoffice.com/installation/docs-community-install-docker.aspx |
-| **Immich** | https://immich.app/docs/overview/introduction |
-| **Jellyfin** | https://jellyfin.org/docs/ |
-| **Ollama** | https://github.com/ollama/ollama/blob/main/README.md |
-| **Open WebUI** | https://docs.openwebui.com/ |
-| **Syncthing** | https://docs.syncthing.net/ |
-| **Kiwix** | https://wiki.kiwix.org/wiki/Main_Page |
-| **FreshRSS** | https://freshrss.github.io/FreshRSS/en/ |
-| **Cockpit** | https://cockpit-project.org/guide/latest/ |
-| **Samba** | https://www.samba.org/samba/docs/ |
-| **Portainer** | https://docs.portainer.io/ |
-| **Minecraft Server** | https://docker-minecraft-server.readthedocs.io/en/latest/ |
-| **Docker** | https://docs.docker.com/ |
-| **NVIDIA Container Toolkit** | https://docs.nvidia.com/datacenter/cloud-native/container-toolkit/latest/index.html |
+| --- | --- |
+| **Nextcloud** | [https://docs.nextcloud.com/](https://docs.nextcloud.com/) |
+| **Immich** | [https://immich.app/docs/](https://www.google.com/search?q=https://immich.app/docs/) |
+| **Jellyfin** | [https://jellyfin.org/docs/](https://jellyfin.org/docs/) |
+| **Open WebUI** | [https://docs.openwebui.com/](https://docs.openwebui.com/) |
+| **Linkwarden** | [https://docs.linkwarden.app/](https://docs.linkwarden.app/) |
+| **Vaultwarden** | [https://github.com/dani-garcia/vaultwarden/wiki](https://www.google.com/search?q=https://github.com/dani-garcia/vaultwarden/wiki) |
+| **Stirling PDF** | [https://github.com/Stirling-Tools/Stirling-PDF](https://github.com/Stirling-Tools/Stirling-PDF) |
+| **Speedtest Tracker** | [https://docs.linuxserver.io/images/docker-speedtest-tracker/](https://docs.linuxserver.io/images/docker-speedtest-tracker/) |
+| **SearXNG** | [https://docs.searxng.org/](https://docs.searxng.org/) |
+| **Glance** | [https://github.com/glanceapp/glance](https://github.com/glanceapp/glance) |
+| **Syncthing** | [https://docs.syncthing.net/](https://docs.syncthing.net/) |
+| **Cockpit** | [https://cockpit-project.org/guide/latest/](https://cockpit-project.org/guide/latest/) |
 
 ---
 

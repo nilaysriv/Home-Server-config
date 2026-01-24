@@ -1,0 +1,162 @@
+theme:
+  preset: dark
+
+branding:
+  name: "Nilay's Command Center"
+
+pages:
+  - name: "Dashboard"
+    width: wide
+    columns:
+      # --- Column 1: Search, Time, Markets & Socials ---
+      - size: small
+        widgets:
+          - type: search
+            autofocus: true
+            engines:
+              - name: duckduckgo
+                url: https://duckduckgo.com/?q={q}
+                shortcut: d
+
+          - type: clock
+            timezone: "Asia/Kolkata"
+            hour-format: 12h
+            show-date: true
+
+          - type: markets
+            title: "Crypto Markets"
+            markets:
+              - { symbol: BTC, name: Bitcoin }
+              - { symbol: ETH, name: Ethereum }
+              - { symbol: SOL, name: Solana }
+              - { symbol: DOGE, name: Dogecoin }
+
+          - type: reddit
+            subreddit: selfhosted
+            limit: 3
+            show-flairs: true
+
+          - type: group
+            name: Socials
+            items:
+              - { name: GitHub, url: "https://github.com/nilaysriv", icon: si:github }
+              - { name: Reddit, url: "https://reddit.com/u/nilay1", icon: si:reddit }
+              - { name: Instagram, url: "https://instagram.com/nilay_srv", icon: si:instagram }
+
+      # --- Column 2: Center (F1, Aircraft, Speed & Services) ---
+      - size: full
+        widgets:
+          - type: docker-containers
+            sort-by: cpu
+            limit: 10
+
+          - type: custom-api
+            title: "Internet Speed"
+            url: "http://100.118.161.53:8087/api/speedtest/latest"
+            template: |
+              {{ if .JSON.Float "download" }}
+                <div class="flex justify-between text-center">
+                  <div>
+                    <div class="color-highlight size-h3">{{ .JSON.Float "download" | mul 0.000001 | printf "%.1f" }}</div>
+                    <div class="size-h6">DOWN</div>
+                  </div>
+                  <div>
+                    <div class="color-highlight size-h3">{{ .JSON.Float "upload" | mul 0.000001 | printf "%.1f" }}</div>
+                    <div class="size-h6">UP</div>
+                  </div>
+                  <div>
+                    <div class="color-highlight size-h3">{{ .JSON.Float "ping" | printf "%.0f" }} ms</div>
+                    <div class="size-h6">PING</div>
+                  </div>
+                </div>
+              {{ else }}
+                <div class="size-h6">No speedtest data. Check Speedtest-Tracker logs.</div>
+              {{ end }}            
+
+          - type: monitor
+            title: "Network Services"
+            cache: 1m
+            sites:
+              - { title: Nextcloud, url: "http://100.118.161.53:8080", icon: si:nextcloud }
+              - { title: Jellyfin, url: "http://100.118.161.53:8096", icon: si:jellyfin }
+              - { title: Immich, url: "http://100.118.161.53:2283", icon: si:immich }
+              - { title: Vaultwarden, url: "http://100.118.161.53:8085", icon: si:bitwarden }
+              - { title: Stirling PDF, url: "http://100.118.161.53:8086", icon: si:adobeacrobatreader }
+              - { title: SearXNG, url: "http://100.118.161.53:8088", icon: si:searxng }
+              - { title: Linkwarden, url: "http://100.118.161.53:8089", icon: si:linkfire }
+              - { title: Portainer, url: "http://100.118.161.53:9000", icon: si:portainer }
+              - { title: Syncthing, url: "http://100.118.161.53:8384", icon: si:syncthing }
+              - { title: Kiwix, url: "http://100.118.161.53:8081", icon: si:kiwix }
+              - { title: FreshRSS, url: "http://100.118.161.53:8083", icon: si:freshrss }
+              - { title: Open-WebUI, url: "http://100.118.161.53:3000", icon: si:openai }
+
+          - type: server-stats
+            title: "Host Metrics"
+            servers:
+              - type: local
+                name: "Nilay-Server"
+
+          - type: custom-api
+            title: "Nearby Aircraft (Delhi)"
+            url: "https://opensky-network.org/api/states/all?lamin=28.4&lomin=77.0&lamax=28.8&lomax=77.4"
+            template: |
+              {{ $states := .JSON.Array "states" }}
+              <div class="size-h2 color-highlight">{{ if $states }}{{ len $states }}{{ else }}0{{ end }}</div>
+              <div class="size-h6">PLANES OVERHEAD (DELHI)</div>                
+
+          - type: custom-api
+            title: "F1 • Next Race"
+            url: "https://f1api.dev/api/current/next"
+            cache: 1h
+            template: |
+              {{ if .JSON.Array "race" }}
+                {{ $race := index (.JSON.Array "race") 0 }}
+                <div class="size-h4 color-highlight">{{ $race.String "raceName" }}</div>
+                <div class="size-h6">{{ $race.String "circuit.circuitName" }}</div>
+                <div class="size-h6">Race: {{ $race.String "schedule.race.date" }}</div>
+              {{ else }}
+                <div class="size-h6">No upcoming race data found</div>
+              {{ end }}
+
+      # --- Column 3: Weather, AQI, Fun & Updates ---
+      - size: small
+        widgets:
+          - type: weather
+            location: "Delhi, India"
+            unit: c
+
+          - type: custom-api
+            title: "Air Quality (Delhi)"
+            url: "https://api.waqi.info/feed/delhi/?token=8ba567bde85ff1b41fb19bce3354b1b7d8bacf52" 
+            template: |
+              <div class="color-highlight size-h2">AQI: {{ .JSON.String "data.aqi" }}</div>
+              <div class="size-h6">Area: {{ .JSON.String "data.city.name" }}</div>
+
+          - type: custom-api
+            title: "Daily Capybara"
+            url: "https://animals.maxz.dev/api/capybara/random"
+            timeout: 15s # Increased timeout because this API is slow
+            template: |
+              {{ $img := .JSON.String "image" }}
+              {{ if $img }}
+                <img src="{{ $img }}" style="width:100%;border-radius:8px;" />
+              {{ else }}
+                <div class="size-h6 color-negative">Capybara Timeout (15s)</div>
+              {{ end }}
+
+          - type: releases
+            title: "Software Updates"
+            repositories:
+              - nextcloud/server
+              - jellyfin/jellyfin
+              - immich-app/immich
+              - vaultwarden/server
+            limit: 4
+
+          - type: to-do
+            title: "Lab Tasks"
+            items:
+              - { text: "Docker monitor fixed", done: true }
+              - { text: "GPU acceleration enabled", done: true }
+              - { text: "Fix Syncthing DB permissions", done: true }
+              - { text: "Add new services", done: true }
