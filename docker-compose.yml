@@ -18,7 +18,7 @@ services:
       MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
       MYSQL_DATABASE: ${NEXTCLOUD_DB}
       MYSQL_USER: ${NEXTCLOUD_DB_USER}
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 2. Nextcloud Application ---
   app:
@@ -36,8 +36,8 @@ services:
       MYSQL_DATABASE: ${NEXTCLOUD_DB}
       MYSQL_USER: ${NEXTCLOUD_DB_USER}
       MYSQL_HOST: db
-    depends_on: [db]
-    networks: [nilay-net]
+    depends_on: [ db ]
+    networks: [ nilay-net ]
 
   # --- 3. Ollama ---
   ollama:
@@ -56,8 +56,8 @@ services:
           devices:
             - driver: nvidia
               count: all
-              capabilities: [gpu]
-    networks: [nilay-net]
+              capabilities: [ gpu ]
+    networks: [ nilay-net ]
 
   # --- 4. Open-WebUI ---
   open-webui:
@@ -70,8 +70,8 @@ services:
       OLLAMA_BASE_URL: http://ollama:11434
     volumes:
       - ${OPENWEBUI_DATA}:/app/backend/data
-    depends_on: [ollama]
-    networks: [nilay-net]
+    depends_on: [ ollama ]
+    networks: [ nilay-net ]
 
   # --- 5. Syncthing ---
   syncthing:
@@ -89,7 +89,7 @@ services:
     volumes:
       - ${SYNCTHING_CONFIG}:/config
       - ${SYNCTHING_DATA}:/vault
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 6. Kiwix ---
   kiwix:
@@ -100,8 +100,8 @@ services:
       - "${KIWIX_PORT}:8080"
     volumes:
       - ${KIWIX_DATA}:/data
-    command: ["*.zim"]
-    networks: [nilay-net]
+    command: [ "*.zim" ]
+    networks: [ nilay-net ]
 
   # --- 7. Cockpit ---
   cockpit:
@@ -118,7 +118,7 @@ services:
       - /etc/shadow:/etc/shadow:ro
       - /etc/localtime:/etc/localtime:ro
       - ${COCKPIT_CONFIG}:/etc/cockpit/cockpit.conf:ro
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 8. Jellyfin ---
   jellyfin:
@@ -134,7 +134,7 @@ services:
     environment:
       PUID: ${PUID}
       PGID: ${PGID}
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 9. ONLYOFFICE ---
   onlyoffice:
@@ -154,7 +154,7 @@ services:
       - ${ONLYOFFICE_LIB}:/var/lib/onlyoffice
       - ${ONLYOFFICE_DB}:/var/lib/postgresql/14/main
       - ${ONLYOFFICE_CACHE}:/var/www/onlyoffice/documentserver/.cache
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 10. FreshRSS ---
   freshrss:
@@ -169,7 +169,7 @@ services:
       TZ: ${TZ}
     volumes:
       - ${FRESHRSS_DATA}:/var/www/FreshRSS/data
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 11. IMMICH (all services kept exactly) ---
   immich-server:
@@ -197,7 +197,7 @@ services:
       - immich-postgres
       - immich-redis
       - immich-machine-learning
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   immich-web:
     image: ghcr.io/immich-app/immich-web:release
@@ -205,8 +205,8 @@ services:
     restart: always
     environment:
       IMMICH_SERVER_URL: http://immich-server:${IMMICH_PORT}
-    depends_on: [immich-server]
-    networks: [nilay-net]
+    depends_on: [ immich-server ]
+    networks: [ nilay-net ]
 
   immich-machine-learning:
     image: ghcr.io/immich-app/immich-machine-learning:release-cuda
@@ -218,7 +218,7 @@ services:
       NVIDIA_DRIVER_CAPABILITIES: compute,utility
     volumes:
       - ${IMMICH_MODEL_CACHE}:/cache
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   immich-postgres:
     image: tensorchord/pgvecto-rs:pg14-v0.2.0
@@ -230,13 +230,13 @@ services:
       POSTGRES_DB: ${IMMICH_DB}
     volumes:
       - ${IMMICH_DB_PATH}:/var/lib/postgresql/data
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   immich-redis:
     image: redis:6.2-alpine
     container_name: immich_redis
     restart: always
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 12. Samba ---
   samba:
@@ -252,7 +252,7 @@ services:
         HomeServer:${SAMBA_SHARE_PATH}:rw:${SAMBA_USER}
     volumes:
       - ${SAMBA_SHARE_PATH}:${SAMBA_SHARE_PATH}
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 13. Portainer ---
   portainer:
@@ -264,7 +264,7 @@ services:
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock
       - ${PORTAINER_DATA}:/data
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 14. Minecraft ---
   minecraft:
@@ -283,7 +283,7 @@ services:
       RCON_PASSWORD: ${MINECRAFT_RCON_PASSWORD}
     volumes:
       - ${MINECRAFT_DATA}:/data
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 15. Glance ---
   glance:
@@ -297,7 +297,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
       TZ: ${TZ}
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 16. Glances ---
   glances:
@@ -308,7 +308,7 @@ services:
       GLANCES_OPT: "-w"
     volumes:
       - /var/run/docker.sock:/var/run/docker.sock:ro
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 17. Vaultwarden ---
   vaultwarden:
@@ -321,7 +321,7 @@ services:
       - ${VAULTWARDEN_DATA}:/data
     ports:
       - "${VAULTWARDEN_PORT}:80"
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 18. Stirling PDF ---
   stirling-pdf:
@@ -336,7 +336,7 @@ services:
       - ${STIRLING_LOGS}:/logs
     environment:
       DOCKER_ENABLE_SECURITY: "false"
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 19. Speedtest Tracker ---
   speedtest-tracker:
@@ -353,7 +353,7 @@ services:
       DB_CONNECTION: sqlite
     volumes:
       - ${SPEEDTEST_DATA}:/config
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 20. SearXNG ---
   searxng:
@@ -366,7 +366,7 @@ services:
       - ${SEARXNG_DATA}:/etc/searxng
     environment:
       SEARXNG_BASE_URL: ${SEARXNG_BASE_URL}
-    networks: [nilay-net]
+    networks: [ nilay-net ]
 
   # --- 21. Linkwarden ---
   linkwarden:
@@ -381,8 +381,8 @@ services:
       NEXTAUTH_SECRET: ${LINKWARDEN_SECRET}
     volumes:
       - ${LINKWARDEN_DATA}:/data/data
-    depends_on: [linkwarden-db]
-    networks: [nilay-net]
+    depends_on: [ linkwarden-db ]
+    networks: [ nilay-net ]
 
   linkwarden-db:
     image: postgres:16-alpine
@@ -394,4 +394,149 @@ services:
       POSTGRES_DB: ${LINKWARDEN_DB}
     volumes:
       - ${LINKWARDEN_PGDATA}:/var/lib/postgresql/data
-    networks: [nilay-net]
+    networks: [ nilay-net ]
+
+  # --- 22. SABnzbd (Usenet) ---
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${ARRS_CONFIG}/sabnzbd:/config
+      - ${MEDIA_ROOT}/usenet:/data/usenet
+    ports:
+      - "${SABNZBD_PORT}:8080"
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 23. qBittorrent (Standard) ---
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8090
+    volumes:
+      - ${ARRS_CONFIG}/qbittorrent:/config
+      - ${MEDIA_ROOT}/torrents:/data/torrents
+    ports:
+      - "${QBIT_PORT}:8090"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 24. RDTClient (Debrid) ---
+  rdtclient:
+    image: rogerfar/rdtclient
+    container_name: rdtclient
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    volumes:
+      - ${MEDIA_ROOT}/torrents:/data/downloads
+      - ${ARRS_CONFIG}/rdtclient:/data/db
+    ports:
+      - "${RDT_PORT}:6500"
+    networks: [ nilay-net ]
+
+  # --- 25. Bazarr (Subtitles) ---
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    ports:
+      - "${BAZARR_PORT}:6767"
+    volumes:
+      - ${ARRS_CONFIG}/bazarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 26. Lidarr (Music) ---
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    ports:
+      - "${LIDARR_PORT}:8686"
+    volumes:
+      - ${ARRS_CONFIG}/lidarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 27. Prowlarr (Indexers) ---
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    ports:
+      - "${PROWLARR_PORT}:9696"
+    volumes:
+      - ${ARRS_CONFIG}/prowlarr:/config
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 28. Radarr (Movies) ---
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    ports:
+      - "${RADARR_PORT}:7878"
+    volumes:
+      - ${ARRS_CONFIG}/radarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 29. Sonarr (TV) ---
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    ports:
+      - "${SONARR_PORT}:8989"
+    volumes:
+      - ${ARRS_CONFIG}/sonarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [ nilay-net ]
+
+  # --- 30. FlareSolverr ---
+  flaresolverr:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Asia/Kolkata
+    ports:
+      - "8191:8191"
+    restart: unless-stopped
+    networks: [ nilay-net ]

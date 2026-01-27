@@ -7,8 +7,10 @@ The stack provides:
 * **Private Cloud:** Nextcloud (Storage), Linkwarden (Bookmarks), Vaultwarden (Passwords)
 * **AI & Intelligence:** Ollama (Backend), Open WebUI (Frontend)
 * **Media & Content:** Jellyfin (Streaming), Immich (Photos), FreshRSS (Feeds), Kiwix (Offline Wiki)
+* **Media Automation (Arrs):** Sonarr (TV), Radarr (Movies), Lidarr (Music), Bazarr (Subtitles), Prowlarr (Indexers)
+* **Downloads:** SABnzbd (Usenet), qBittorrent (Torrents), RDTClient (Debrid)
 * **Productivity:** ONLYOFFICE (Docs), Stirling PDF (PDF Tools), Syncthing (Sync)
-* **System & Tools:** Cockpit, Portainer, Glance, Speedtest Tracker, SearXNG
+* **System & Tools:** Cockpit, Portainer, Glance, Speedtest Tracker, SearXNG, FlareSolverr
 
 All services are orchestrated using **Docker Compose** with environment variables managed via a `.env` file for security and portability.
 
@@ -37,6 +39,15 @@ All services are orchestrated using **Docker Compose** with environment variable
 | **Samba** | `samba` | `445` | LAN file sharing | ✅ Operational |
 | **Portainer** | `portainer` | `9000` | Docker management UI | ✅ Operational |
 | **Minecraft** | `minecraft-server` | `25565` | Minecraft Java server (Paper) | ✅ Operational |
+| **SABnzbd** | `sabnzbd` | `8180` | Usenet downloader | ✅ Operational |
+| **qBittorrent** | `qbittorrent` | `8090` | Torrent downloader | ✅ Operational |
+| **RDTClient** | `rdtclient` | `6500` | Real-Debrid downloader | ✅ Operational |
+| **Sonarr** | `sonarr` | `8989` | TV Series management | ✅ Operational |
+| **Radarr** | `radarr` | `7878` | Movie management | ✅ Operational |
+| **Lidarr** | `lidarr` | `8686` | Music management | ✅ Operational |
+| **Bazarr** | `bazarr` | `6767` | Subtitle management | ✅ Operational |
+| **Prowlarr** | `prowlarr` | `9696` | Indexer management | ✅ Operational |
+| **FlareSolverr** | `flaresolverr` | `8191` | Proxy for indexers | ✅ Operational |
 
 ---
 
@@ -114,6 +125,8 @@ All persistent data lives under `/mnt/sda1`. The exact paths are configurable in
 | `/mnt/sda1/freshrss/` | FreshRSS data |
 | `/mnt/sda1/glance/` | Glance dashboard config |
 | `/mnt/sda1/minecraft/` | Minecraft server data |
+| `/mnt/sda1/media/` | Media libraries (Torrents, Usenet, etc.) |
+| `/mnt/sda1/arrs/` | Configuration for Arrs apps |
 
 ---
 
@@ -136,6 +149,14 @@ Use **local IP** or **Tailscale IP / hostname**.
 | **Linkwarden** | `http://<ip>:8089` |
 | **Cockpit** | `http://<ip>:9090` |
 | **Portainer** | `http://<ip>:9000` |
+| **SABnzbd** | `http://<ip>:8180` |
+| **qBittorrent** | `http://<ip>:8090` |
+| **RDTClient** | `http://<ip>:6500` |
+| **Sonarr** | `http://<ip>:8989` |
+| **Radarr** | `http://<ip>:7878` |
+| **Lidarr** | `http://<ip>:8686` |
+| **Bazarr** | `http://<ip>:6767` |
+| **Prowlarr** | `http://<ip>:9696` |
 
 ---
 
@@ -173,6 +194,7 @@ docker exec --user www-data nextcloud-setup-app-1 php occ config:system:delete t
 | **Glance** | [https://github.com/glanceapp/glance](https://github.com/glanceapp/glance) |
 | **Syncthing** | [https://docs.syncthing.net/](https://docs.syncthing.net/) |
 | **Cockpit** | [https://cockpit-project.org/guide/latest/](https://cockpit-project.org/guide/latest/) |
+| **Servarr (Arrs)** | [https://wiki.servarr.com/](https://wiki.servarr.com/) |
 
 ---
 

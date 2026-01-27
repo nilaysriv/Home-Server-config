@@ -23,6 +23,8 @@ SEARXNG_BASE="/mnt/sda1/searxng"
 LINKWARDEN_BASE="/mnt/sda1/linkwarden"
 SAMBA_BASE="/mnt/sda1"
 COCKPIT_BASE="/mnt/sda1/cockpit"
+MEDIA_BASE="/mnt/sda1/media"
+ARRS_BASE="/mnt/sda1/arrs"
 SSD_MOUNT="/home/nilay/nextcloud_ssd"
 USER_NAME="nilay"
 PUID=1000
@@ -51,6 +53,8 @@ sudo mkdir -p \
   "$SEARXNG_BASE" \
   "$LINKWARDEN_BASE"/{data,pgdata} \
   "$COCKPIT_BASE" \
+  "$MEDIA_BASE"/{usenet,torrents} \
+  "$ARRS_BASE"/{sabnzbd,qbittorrent,rdtclient,bazarr,lidarr,prowlarr,radarr,sonarr} \
   "$SSD_MOUNT"
 
 # =======================
@@ -113,6 +117,8 @@ sudo chown -R $PUID:$PGID \
   "$SPEEDTEST_BASE" \
   "$SEARXNG_BASE" \
   "$LINKWARDEN_BASE" \
+  "$MEDIA_BASE" \
+  "$ARRS_BASE" \
   "$SSD_MOUNT"
 
 # Docker access
@@ -128,6 +134,6 @@ echo "Adding Ollama GPU keepalive cron..."
 # Notes
 # =======================
 echo "=== Setup Complete ==="
-echo "- All containers preserved (1–21)"
+echo "- All containers preserved"
 echo "- Uses env-based docker-compose.yml"
 echo "- Next: docker compose --env-file .env up -d"
