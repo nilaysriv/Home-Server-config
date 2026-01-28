@@ -8,7 +8,7 @@ pages:
   - name: "Dashboard"
     width: wide
     columns:
-      # --- Column 1: Search, Time, Markets & Socials ---
+      # --- Column 1: Search, Time, Calendar, Markets & Socials ---
       - size: small
         widgets:
           - type: search
@@ -22,6 +22,9 @@ pages:
             timezone: "Asia/Kolkata"
             hour-format: 12h
             show-date: true
+
+          - type: calendar
+            first-day-of-week: monday
 
           - type: markets
             title: "Crypto Markets"
@@ -50,9 +53,11 @@ pages:
             sort-by: cpu
             limit: 10
 
+          # --- FIX 1: SPEEDTEST (Internal Docker URL) ---
           - type: custom-api
             title: "Internet Speed"
-            url: "http://100.118.161.53:8087/api/speedtest/latest"
+            # Changed from 100.x.x.x to internal container name to fix "EOF"
+            url: "http://speedtest-tracker:80/api/speedtest/latest"
             template: |
               {{ if .JSON.Float "download" }}
                 <div class="flex justify-between text-center">
@@ -89,6 +94,23 @@ pages:
               - { title: Kiwix, url: "http://100.118.161.53:8081", icon: si:kiwix }
               - { title: FreshRSS, url: "http://100.118.161.53:8083", icon: si:freshrss }
               - { title: Open-WebUI, url: "http://100.118.161.53:3000", icon: si:openai }
+              # --- FIX 2: ICONS (Using Safe Fallbacks) ---
+              - { title: Cockpit, url: "http://100.118.161.53:9090", icon: si:cockpit }
+              - { title: Speedtest, url: "http://100.118.161.53:8087", icon: si:speedtest }
+              - { title: ONLYOFFICE, url: "http://100.118.161.53:8082", icon: si:onlyoffice }
+              - { title: Sonarr, url: "http://100.118.161.53:8989", icon: si:sonarr }
+              - { title: Radarr, url: "http://100.118.161.53:7878", icon: si:radarr }
+              # Fallback: Lidarr -> Apple Music icon
+              - { title: Lidarr, url: "http://100.118.161.53:8686", icon: si:apple } 
+              # Fallback: Bazarr -> VLC icon
+              # - { title: Bazarr, url: "http://100.118.161.53:6767", icon: si:vlc }
+              # Fallback: Prowlarr -> Google icon (Search)
+              - { title: Prowlarr, url: "http://100.118.161.53:9696", icon: si:google }
+              - { title: qBittorrent, url: "http://100.118.161.53:8090", icon: si:qbittorrent }
+              # Fallback: SABnzbd -> Linux icon
+              - { title: SABnzbd, url: "http://100.118.161.53:8084", icon: si:linux }
+              # Fallback: RDTClient -> AdGuard (Shield) icon
+              - { title: RDTClient, url: "http://100.118.161.53:6500", icon: si:adguard }
 
           - type: server-stats
             title: "Host Metrics"
@@ -101,19 +123,44 @@ pages:
             url: "https://opensky-network.org/api/states/all?lamin=28.4&lomin=77.0&lamax=28.8&lomax=77.4"
             template: |
               {{ $states := .JSON.Array "states" }}
-              <div class="size-h2 color-highlight">{{ if $states }}{{ len $states }}{{ else }}0{{ end }}</div>
-              <div class="size-h6">PLANES OVERHEAD (DELHI)</div>                
+              {{ if $states }}
+                {{ $count := len $states }}
+                {{ $plane := index $states 0 }}
+                
+                {{ $callsign := $plane.String "1" }}
+                {{ $country := $plane.String "2" }}
+                {{ $alt_m := $plane.Float "7" }}
+                
+                <div class="flex justify-between items-center">
+                  <div>
+                    <div class="size-h2 color-highlight">{{ $count }}</div>
+                    <div class="size-h6">PLANES OVERHEAD</div>
+                  </div>
+                  <div class="text-right">
+                    <div class="size-h5 color-primary">{{ if $callsign }}{{ $callsign }}{{ else }}N/A{{ end }}</div>
+                    <div class="size-h7">{{ $country }}</div>
+                    {{ if $alt_m }}
+                       <div class="size-h7">{{ mul $alt_m 3.28 | printf "%.0f" }} ft</div>
+                    {{ end }}
+                  </div>
+                </div>
+              {{ else }}
+                <div class="size-h2 color-highlight">0</div>
+                <div class="size-h6">PLANES OVERHEAD</div>
+              {{ end }}                 
 
           - type: custom-api
             title: "F1 • Next Race"
-            url: "https://f1api.dev/api/current/next"
-            cache: 1h
+            url: "https://api.jolpi.ca/ergast/f1/current/next.json"
+            cache: 4h
             template: |
-              {{ if .JSON.Array "race" }}
-                {{ $race := index (.JSON.Array "race") 0 }}
+              {{ $races := .JSON.Array "MRData.RaceTable.Races" }}
+              
+              {{ if $races }}
+                {{ $race := index $races 0 }}
                 <div class="size-h4 color-highlight">{{ $race.String "raceName" }}</div>
-                <div class="size-h6">{{ $race.String "circuit.circuitName" }}</div>
-                <div class="size-h6">Race: {{ $race.String "schedule.race.date" }}</div>
+                <div class="size-h6">{{ $race.String "Circuit.circuitName" }}</div>
+                <div class="size-h6">{{ $race.String "date" }}</div>
               {{ else }}
                 <div class="size-h6">No upcoming race data found</div>
               {{ end }}
@@ -135,7 +182,7 @@ pages:
           - type: custom-api
             title: "Daily Capybara"
             url: "https://animals.maxz.dev/api/capybara/random"
-            timeout: 15s # Increased timeout because this API is slow
+            timeout: 15s 
             template: |
               {{ $img := .JSON.String "image" }}
               {{ if $img }}
