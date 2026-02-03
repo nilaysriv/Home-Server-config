@@ -1,0 +1,445 @@
+theme:
+  preset: dark
+
+branding:
+  name: "Nilay's Command Center"
+
+pages:
+  - name: "Dashboard"
+    width: wide
+    columns:
+      # --- Column 1: Search, Time, Calendar, Markets & Socials ---
+      - size: small
+        widgets:
+          - type: search
+            autofocus: true
+            engines:
+              - name: duckduckgo
+                url: https://duckduckgo.com/?q={q}
+                shortcut: d
+
+          - type: clock
+            timezone: "Asia/Kolkata"
+            hour-format: 12h
+            show-date: true
+
+          - type: calendar
+            first-day-of-week: monday
+
+          - type: markets
+            title: "Crypto Markets"
+            markets:
+              - { symbol: BTC-USD, name: Bitcoin }
+              - { symbol: ETH-USD, name: Ethereum }
+              - { symbol: SOL-USD, name: Solana }
+              - { symbol: DOGE-USD, name: Dogecoin }
+
+          - type: reddit
+            subreddit: worldnews
+            limit: 10
+            show-flairs: true
+
+      # --- Column 2: Center (Metrics, Services & Docker) ---
+      - size: full
+        widgets:
+          - type: server-stats
+            title: "Host Metrics"
+            servers:
+              - type: local
+                name: "Nilay-Server"
+
+          - type: monitor
+            title: "Network Services"
+            cache: 30s
+            sites:
+              - {
+                  title: Nextcloud,
+                  url: "https://nextcloud.nilay-server.com/",
+                  icon: si:nextcloud,
+                }
+              - {
+                  title: n8n,
+                  url: "https://n8n.nilay-server.com/",
+                  icon: si:n8n,
+                }
+              - {
+                  title: Jellyfin,
+                  url: "https://media.nilay-server.com/",
+                  icon: si:jellyfin,
+                }
+              - {
+                  title: Immich,
+                  url: "https://photos.nilay-server.com/",
+                  icon: si:immich,
+                }
+              - {
+                  title: Vaultwarden,
+                  url: "https://vault.nilay-server.com/",
+                  icon: si:bitwarden,
+                }
+              - {
+                  title: Stirling PDF,
+                  url: "https://pdf.nilay-server.com/",
+                  icon: si:adobeacrobatreader,
+                }
+              - {
+                  title: SearXNG,
+                  url: "https://search.nilay-server.com/",
+                  icon: si:searxng,
+                }
+              - {
+                  title: Linkwarden,
+                  url: "https://links.nilay-server.com/",
+                  icon: si:linkfire,
+                }
+              - {
+                  title: Portainer,
+                  url: "https://docker.nilay-server.com/",
+                  icon: si:portainer,
+                }
+              - {
+                  title: Syncthing,
+                  url: "https://sync.nilay-server.com/",
+                  icon: si:syncthing,
+                }
+              - {
+                  title: Kiwix,
+                  url: "https://kiwix.nilay-server.com/",
+                  icon: si:kiwix,
+                }
+              - {
+                  title: Speedtest Tracker,
+                  url: "https://speed.nilay-server.com/",
+                  icon: si:speedtest,
+                }
+              - {
+                  title: FreshRSS,
+                  url: "https://rss.nilay-server.com/",
+                  icon: si:freshrss,
+                }
+              - {
+                  title: Open-WebUI,
+                  url: "https://ai.nilay-server.com/",
+                  icon: si:openai,
+                }
+              - {
+                  title: Cockpit,
+                  url: "https://cockpit.nilay-server.com/",
+                  icon: si:cockpit,
+                }
+              - {
+                  title: ONLYOFFICE,
+                  url: "https://docs.nilay-server.com/",
+                  icon: si:onlyoffice,
+                }
+              - {
+                  title: Sonarr,
+                  url: "https://tv.nilay-server.com/",
+                  icon: si:sonarr,
+                }
+              - {
+                  title: Radarr,
+                  url: "https://movies.nilay-server.com/",
+                  icon: si:radarr,
+                }
+              - {
+                  title: Lidarr,
+                  url: "https://music.nilay-server.com/",
+                  icon: si:apple,
+                }
+              - {
+                  title: qBittorrent,
+                  url: "https://torrent.nilay-server.com/",
+                  icon: si:qbittorrent,
+                }
+
+          - type: monitor
+            title: "Internal Services"
+            cache: 30s
+            sites:
+              - {
+                  title: Prowlarr,
+                  url: "http://100.118.161.53:9696",
+                  icon: si:google,
+                }
+              - {
+                  title: Bazarr,
+                  url: "http://100.118.161.53:6767",
+                  icon: si:subtitleedit,
+                }
+              - {
+                  title: SABnzbd,
+                  url: "http://100.118.161.53:8180",
+                  icon: si:linux,
+                }
+              - {
+                  title: RDTClient,
+                  url: "http://100.118.161.53:6500",
+                  icon: si:adguard,
+                }
+
+          - type: custom-api
+            cache: 1m
+            title: Internet Speed
+            title-url: "http://100.118.161.53:8087"
+            url: "http://100.118.161.53:8087/api/v1/results/latest"
+            headers:
+              Authorization: "Bearer wRHkKcqBNgRa142XHTy1Mocb8s0SU6rTfAGVEKGyd5e52284"
+              Accept: application/json
+            subrequests:
+              stats:
+                url: "http://100.118.161.53:8087/api/v1/stats"
+                headers:
+                  Authorization: "Bearer wRHkKcqBNgRa142XHTy1Mocb8s0SU6rTfAGVEKGyd5e52284"
+                  Accept: application/json
+            options:
+              showPercentageDiff: true
+            template: |
+              {{ $showPercentage := .Options.BoolOr "showPercentageDiff" true }}
+              {{ $stats := .Subrequest "stats" }}
+              <div class="flex justify-between text-center margin-block-3">
+              <div>
+                  {{ $downloadChange := percentChange ($stats.JSON.Float "data.download.avg_bits") (.JSON.Float "data.download_bits") }}
+                  {{ if $showPercentage }}
+                  <div class="size-small {{ if gt $downloadChange 0.0 }}color-positive{{ else if lt $downloadChange 0.0 }}color-negative{{ else }}color-primary{{ end }}" style="display: inline-flex; align-items: center;">
+                  {{ $downloadChange | printf "%+.1f%%" }}
+                  </div>
+                  {{ end }}
+                  <div class="color-highlight size-h3">{{ .JSON.Float "data.download_bits" | mul 0.000001 | printf "%.1f" }}</div>
+                  <div class="size-h6">DOWNLOAD</div>
+              </div>
+              <div>
+                  {{ $uploadChange := percentChange ($stats.JSON.Float "data.upload.avg_bits") (.JSON.Float "data.upload_bits") }}
+                  {{ if $showPercentage }}
+                  <div class="size-small {{ if gt $uploadChange 0.0 }}color-positive{{ else if lt $uploadChange 0.0 }}color-negative{{ else }}color-primary{{ end }}" style="display: inline-flex; align-items: center;">
+                  {{ $uploadChange | printf "%+.1f%%" }}
+                  </div>
+                  {{ end }}
+                  <div class="color-highlight size-h3">{{ .JSON.Float "data.upload_bits" | mul 0.000001 | printf "%.1f" }}</div>
+                  <div class="size-h6">UPLOAD</div>
+              </div>
+              <div>
+                  {{ $pingChange := percentChange ($stats.JSON.Float "data.ping.avg") (.JSON.Float "data.ping") }}
+                  {{ if $showPercentage }}
+                  <div class="size-small {{ if gt $pingChange 0.0 }}color-negative{{ else if lt $pingChange 0.0 }}color-positive{{ else }}color-primary{{ end }}" style="display: inline-flex; align-items: center;">
+                  {{ $pingChange | printf "%+.1f%%" }}
+                  </div>
+                  {{ end }}
+                  <div class="color-highlight size-h3">{{ .JSON.Float "data.ping" | printf "%.0f ms" }}</div>
+                  <div class="size-h6">PING</div>
+              </div>
+              </div>
+
+          - type: docker-containers
+            sort-by: cpu
+            limit: 10
+
+      # --- Column 3: Weather, AQI, Aviation & Fun ---
+      - size: small
+        widgets:
+          - type: weather
+            location: "Delhi, India"
+            unit: c
+            cache: 1m
+
+          - type: custom-api
+            title: "Air Quality (Delhi)"
+            cache: 1m
+            url: "https://api.waqi.info/feed/delhi/?token=8ba567bde85ff1b41fb19bce3354b1b7d8bacf52"
+            template: |-
+              {{ $aqi := printf "%03s" (.JSON.String "data.aqi") }}
+              {{ $aqiraw := .JSON.String "data.aqi" }}
+              {{ $updated := .JSON.String "data.time.iso" }}
+              {{ $humidity := .JSON.Float "data.iaqi.h.v" }}
+              {{ $ozone := .JSON.String "data.iaqi.o3.v" }}
+              {{ $pm25 := .JSON.String "data.iaqi.pm25.v" }}
+              {{ $pressure := .JSON.Float "data.iaqi.p.v" }}
+
+              <div class="flex justify-between">
+                <div class="size-h5">
+                  {{ if le $aqi "050" }}
+                    <div class="color-positive">Good air quality</div>
+                  {{ else if le $aqi "100" }}
+                    <div class="color-primary">Moderate air quality</div>
+                  {{ else }}
+                    <div class="color-negative">Bad air quality</div>
+                  {{ end }}
+                </div>
+              </div>
+
+              <div class="color-highlight size-h2">AQI: {{ $aqiraw }}</div>
+              <div style="border-bottom: 1px solid; margin-block: 10px;"></div>
+
+              <div class="margin-block-2">
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+
+                  <div>
+                    <div class="size-h3 color-highlight">{{ printf "%.1f" $humidity }}%</div>
+                    <div class="size-h6">HUMIDITY</div>
+                  </div>
+
+                  <div>
+                    <div class="size-h3 color-highlight">{{ $ozone }} μg/m³</div>
+                    <div class="size-h6">OZONE</div>
+                  </div>
+
+                  <div>
+                    <div class="size-h3 color-highlight">{{ $pm25 }} μg/m³</div>
+                    <div class="size-h6">PM2.5</div>
+                  </div>
+
+                  <div>
+                    <div class="size-h3 color-highlight">{{ printf "%.1f" $pressure }} hPa</div>
+                    <div class="size-h6">PRESSURE</div>
+                  </div>
+
+                </div>
+
+                <div class="size-h6" style="margin-top: 10px;">Last Updated at {{ slice $updated 11 16 }}</div>
+              </div>
+
+          - type: custom-api
+            title: Nearby Aircraft
+            cache: 1m
+            url: "https://opensky-network.org/api/states/all?lamin=28.4&lomin=76.8&lamax=28.9&lomax=77.5"
+            template: |-
+              <div class="opensky-aircraft-stats">
+                {{ $states := .JSON.Array "states" }}
+                {{ $statesCount := len $states }}
+                <div class="margin-block-2">
+                  <div class="size-h6">AIRCRAFT NEARBY: {{ $statesCount }}</div>
+                </div>
+                {{ if gt $statesCount 0 }}
+                  {{ $plane := index $states 0 }}
+                  {{ $callsign := $plane.String "1" }}
+                  {{ $icao24 := $plane.String "0" }}
+                  {{ $origin := $plane.String "2" }}
+                  {{ $altitude := $plane.Float "7" }}
+                  {{ $onGround := $plane.Bool "8" }}
+                  {{ $speed := $plane.Float "9" }}
+
+                  <div class="margin-block-2">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                      <div>
+                        <div class="color-highlight size-h3">{{ if ne $callsign "" }}{{ $callsign }}{{ else }}{{ $icao24 }}{{ end }}</div>
+                        <div class="size-h6">CALLSIGN</div>
+                      </div>
+                      <div>
+                        <div class="color-highlight size-h3 text-truncate">{{ if ne $origin "" }}{{ $origin }}{{ else }}-{{ end }}</div>
+                        <div class="size-h6">ORIGIN</div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div class="margin-block-2">
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px;">
+                      <div>
+                        <div class="color-highlight size-h3">
+                          {{ if and (not $onGround) (ne $altitude 0.0) }}{{ printf "%.0f" $altitude }}m{{ else }}-{{ end }}
+                        </div>
+                        <div class="size-h6">ALTITUDE</div>
+                      </div>
+                      <div>
+                        <div class="color-highlight size-h3">
+                          {{ if and (not $onGround) (ne $speed 0.0) }}{{ printf "%.0f" $speed }}m/s{{ else }}-{{ end }}
+                        </div>
+                        <div class="size-h6">SPEED</div>
+                      </div>
+                    </div>
+                  </div>
+                {{ end }}
+              </div>
+
+          - type: custom-api
+            title: "F1 • Next Race"
+            cache: 5m
+            url: "https://f1api.dev/api/current/next?timezone=Asia/Kolkata"
+            template: |-
+              {{ $img := "https://cdn-icons-png.flaticon.com/512/668/668087.png" }}
+              {{ $race := .JSON.String "race.0.raceName" }}
+              {{ if not $race }}{{ $race = (printf "Round %s" (.JSON.String "round")) }}{{ end }}
+              {{ $date := .JSON.String "race.0.schedule.race.date" }}
+              {{ $time := .JSON.String "race.0.schedule.race.time" }}
+              {{ $cname := .JSON.String "race.0.circuit.circuitName" }}
+              {{ $city := .JSON.String "race.0.circuit.city" }}
+              {{ $country := .JSON.String "race.0.circuit.country" }}
+
+              <div style="display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:start">
+                <img src="{{ $img }}" alt="F1" style="width:56px;height:56px;object-fit:contain;opacity:.9;filter:grayscale(1);" />
+                <div>
+                  <div class="size-h4 color-highlight">{{ $race }}</div>
+                  <div class="size-h6">{{ $cname }}</div>
+                  <div class="size-h6">{{ $city }}, {{ $country }}</div>
+                  <div class="size-h6" style="margin-top:6px">
+                     Race: {{ $date }} {{ if $time }}• {{ $time }}{{ end }}
+                  </div>
+                  <div style="border-top:1px solid;margin-top:10px;padding-top:8px" class="size-h6">
+                    FP1: {{ .JSON.String "race.0.schedule.fp1.date" }} {{ if .JSON.String "race.0.schedule.fp1.time" }}• {{ .JSON.String "race.0.schedule.fp1.time" }}{{ end }}<br/>
+                    Qualy: {{ .JSON.String "race.0.schedule.qualy.date" }} {{ if .JSON.String "race.0.schedule.qualy.time" }}• {{ .JSON.String "race.0.schedule.qualy.time" }}{{ end }}
+                   </div>
+                </div>
+               </div>
+
+          - type: custom-api
+            title: "F1 • Last Race Result"
+            cache: 5m
+            url: "https://f1api.dev/api/current/previous?timezone=Asia/Kolkata"
+            template: |-
+              {{ $img := "https://cdn-icons-png.flaticon.com/512/668/668087.png" }}
+              {{ $race := .JSON.String "race.0.raceName" }}
+              {{ if not $race }}{{ $race = (printf "Round %s" (.JSON.String "race.0.round")) }}{{ end }}
+              {{ $date := .JSON.String "race.0.schedule.race.date" }}
+
+              {{/* Accessing the first result in the results array */}}
+              {{ $winner := .JSON.String "race.0.results.0.driver.fullName" }}
+              {{ if not $winner }}{{ $winner = .JSON.String "race.0.results.0.driver.lastName" }}{{ end }}
+              {{ $team := .JSON.String "race.0.results.0.constructor.name" }}
+              {{ $cname := .JSON.String "race.0.circuit.circuitName" }}
+
+              <div style="display:grid;grid-template-columns:56px 1fr;gap:12px;align-items:start">
+                <img src="{{ $img }}" alt="F1" style="width:56px;height:56px;object-fit:contain;opacity:.9;filter:grayscale(1);" />
+                <div>
+                  <div class="size-h4 color-highlight">{{ $race }}</div>
+                  <div class="size-h6">{{ $cname }}</div>
+                  <div class="size-h6">{{ $date }}</div>
+                  
+                  {{ if $winner }}
+                  <div style="border-top:1px solid;margin-top:10px;padding-top:8px">
+                    <div class="size-h6" style="opacity:0.8">WINNER</div>
+                    <div class="size-h4 color-positive">{{ $winner }}</div>
+                    <div class="size-h6">{{ $team }}</div>
+                  </div>
+                  {{ else }}
+                  <div style="border-top:1px solid;margin-top:10px;padding-top:8px" class="size-h6">
+                    Results pending...
+                  </div>
+                  {{ end }}
+                </div>
+              </div>
+
+          - type: custom-api
+            title: "Daily Capybara"
+            url: "https://animals.maxz.dev/api/capybara/random"
+            cache: 5m
+            template: |
+              {{ $img := .JSON.String "image" }}
+              <img src="{{ $img }}" style="width:100%;border-radius:8px;" />
+
+          - type: releases
+            show-source-icon: true
+            title: "Updates"
+            repositories:
+              - nextcloud/server
+              - jellyfin/jellyfin
+              - immich-app/immich
+              - dani-garcia/vaultwarden
+            limit: 4
+            refresh-interval: 43200
+
+          - type: to-do
+            title: "Lab Tasks"
+            items:
+              - { text: "Docker monitor fixed", done: true }
+              - { text: "GPU acceleration enabled", done: true }
+              - { text: "Fix Syncthing DB permissions", done: true }
+              - { text: "Add new services", done: true }

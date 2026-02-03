@@ -1,0 +1,609 @@
+version: "3.9"
+
+networks:
+  nilay-net:
+    driver: bridge
+
+services:
+  # --- 1. Nextcloud Database ---
+  db:
+    image: mariadb:10.6
+    container_name: nextcloud-setup-db-1
+    restart: always
+    command: --transaction-isolation=READ-COMMITTED --binlog-format=ROW
+    volumes:
+      - ${NEXTCLOUD_DB_PATH}:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: ${NEXTCLOUD_DB_ROOT_PASSWORD}
+      MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      MYSQL_DATABASE: ${NEXTCLOUD_DB}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+    networks: [nilay-net]
+
+  # --- 2. Nextcloud Application ---
+  app:
+    image: nextcloud
+    container_name: nextcloud-setup-app-1
+    restart: always
+    ports:
+      - "${NEXTCLOUD_PORT}:80"
+    volumes:
+      - ${NEXTCLOUD_HTML}:/var/www/html
+      - ${NEXTCLOUD_DATA}:/var/www/html/data
+      - ${NEXTCLOUD_SSD_MOUNT}:/var/www/html/data/${NEXTCLOUD_SSD_SUBPATH}
+    environment:
+      MYSQL_PASSWORD: ${NEXTCLOUD_DB_PASSWORD}
+      MYSQL_DATABASE: ${NEXTCLOUD_DB}
+      MYSQL_USER: ${NEXTCLOUD_DB_USER}
+      MYSQL_HOST: db
+    depends_on: [db]
+    networks: [nilay-net]
+
+  # --- 3. Ollama ---
+  ollama:
+    image: ollama/ollama
+    container_name: ollama
+    restart: always
+    ports:
+      - "${OLLAMA_PORT}:11434"
+    environment:
+      OLLAMA_HOST: 0.0.0.0:11434
+    volumes:
+      - ${OLLAMA_DATA}:/root/.ollama
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: all
+              capabilities: [gpu]
+    networks: [nilay-net]
+
+  # --- 4. Open-WebUI ---
+  open-webui:
+    image: ghcr.io/open-webui/open-webui:main
+    container_name: open-webui
+    restart: always
+    ports:
+      - "${OPENWEBUI_PORT}:8080"
+    environment:
+      OLLAMA_BASE_URL: http://ollama:11434
+    volumes:
+      - ${OPENWEBUI_DATA}:/app/backend/data
+    depends_on: [ollama]
+    networks: [nilay-net]
+
+  # --- 5. Syncthing ---
+  syncthing:
+    image: lscr.io/linuxserver/syncthing
+    container_name: syncthing
+    restart: unless-stopped
+    ports:
+      - "${SYNCTHING_GUI_PORT}:8384"
+      - "22000:22000"
+      - "21027:21027/udp"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${SYNCTHING_CONFIG}:/config
+      - ${SYNCTHING_DATA}:/vault
+    networks: [nilay-net]
+
+  # --- 6. Kiwix ---
+  kiwix:
+    image: ghcr.io/kiwix/kiwix-serve:latest
+    container_name: kiwix
+    restart: unless-stopped
+    ports:
+      - "${KIWIX_PORT}:8080"
+    volumes:
+      - ${KIWIX_DATA}:/data
+    command: ["*.zim"]
+    networks: [nilay-net]
+
+  # --- 7. Cockpit ---
+  cockpit:
+    image: quay.io/cockpit/ws
+    container_name: cockpit
+    restart: always
+    privileged: true
+    ports:
+      - "${COCKPIT_PORT}:9090"
+    volumes:
+      - /run/dbus:/run/dbus:ro
+      - /etc/passwd:/etc/passwd:ro
+      - /etc/group:/etc/group:ro
+      - /etc/shadow:/etc/shadow:ro
+      - /etc/localtime:/etc/localtime:ro
+      - ${COCKPIT_CONFIG}:/etc/cockpit/cockpit.conf:ro
+    networks: [nilay-net]
+
+  # --- 8. Jellyfin ---
+  jellyfin:
+    image: jellyfin/jellyfin
+    container_name: jellyfin
+    restart: unless-stopped
+    ports:
+      - "${JELLYFIN_PORT}:8096"
+    volumes:
+      - ${JELLYFIN_CONFIG}:/config
+      - ${JELLYFIN_CACHE}:/cache
+      - ${MEDIA_ROOT}:/media
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+    networks: [nilay-net]
+
+  # --- 9. ONLYOFFICE ---
+  onlyoffice:
+    image: onlyoffice/documentserver:latest
+    container_name: onlyoffice
+    restart: always
+    ports:
+      - "${ONLYOFFICE_PORT}:80"
+    environment:
+      JWT_ENABLED: "true"
+      JWT_SECRET: ${ONLYOFFICE_JWT_SECRET}
+      JWT_HEADER: Authorization
+      JWT_IN_BODY: "true"
+    volumes:
+      - ${ONLYOFFICE_DATA}:/var/www/onlyoffice/Data
+      - ${ONLYOFFICE_LOGS}:/var/log/onlyoffice
+      - ${ONLYOFFICE_LIB}:/var/lib/onlyoffice
+      - ${ONLYOFFICE_DB}:/var/lib/postgresql/14/main
+      - ${ONLYOFFICE_CACHE}:/var/www/onlyoffice/documentserver/.cache
+    networks: [nilay-net]
+
+  # --- 10. FreshRSS ---
+  freshrss:
+    image: freshrss/freshrss
+    container_name: freshrss
+    restart: unless-stopped
+    ports:
+      - "${FRESHRSS_PORT}:80"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${FRESHRSS_DATA}:/var/www/FreshRSS/data
+    networks: [nilay-net]
+
+  # --- 11. IMMICH (all services kept exactly) ---
+  immich-server:
+    image: ghcr.io/immich-app/immich-server:release
+    container_name: immich_server
+    restart: always
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: all
+      DB_HOSTNAME: immich-postgres
+      DB_USERNAME: ${IMMICH_DB_USER}
+      DB_PASSWORD: ${IMMICH_DB_PASSWORD}
+      DB_DATABASE_NAME: ${IMMICH_DB}
+      REDIS_HOSTNAME: immich-redis
+      IMMICH_LISTEN_IP: 0.0.0.0
+      IMMICH_PORT: ${IMMICH_PORT}
+      IMMICH_TRUSTED_PROXIES: 172.16.0.0/12
+    volumes:
+      - ${IMMICH_LIBRARY}:/usr/src/app/upload
+      - /etc/localtime:/etc/localtime:ro
+    ports:
+      - "${IMMICH_PORT}:${IMMICH_PORT}"
+    depends_on:
+      - immich-postgres
+      - immich-redis
+      - immich-machine-learning
+    networks: [nilay-net]
+
+  immich-web:
+    image: ghcr.io/immich-app/immich-web:release
+    container_name: immich_web
+    restart: always
+    environment:
+      IMMICH_SERVER_URL: http://immich-server:${IMMICH_PORT}
+    depends_on: [immich-server]
+    networks: [nilay-net]
+
+  immich-machine-learning:
+    image: ghcr.io/immich-app/immich-machine-learning:release-cuda
+    container_name: immich_machine_learning
+    restart: always
+    runtime: nvidia
+    environment:
+      NVIDIA_VISIBLE_DEVICES: all
+      NVIDIA_DRIVER_CAPABILITIES: compute,utility
+    volumes:
+      - ${IMMICH_MODEL_CACHE}:/cache
+    networks: [nilay-net]
+
+  immich-postgres:
+    image: tensorchord/pgvecto-rs:pg14-v0.2.0
+    container_name: immich_postgres
+    restart: always
+    environment:
+      POSTGRES_PASSWORD: ${IMMICH_DB_PASSWORD}
+      POSTGRES_USER: ${IMMICH_DB_USER}
+      POSTGRES_DB: ${IMMICH_DB}
+    volumes:
+      - ${IMMICH_DB_PATH}:/var/lib/postgresql/data
+    networks: [nilay-net]
+
+  immich-redis:
+    image: redis:6.2-alpine
+    container_name: immich_redis
+    restart: always
+    networks: [nilay-net]
+
+  # --- 12. Samba ---
+  samba:
+    image: servercontainers/samba
+    container_name: samba
+    restart: unless-stopped
+    ports:
+      - "445:445"
+    environment:
+      SAMBA_LOG_LEVEL: "1"
+      SAMBA_USERS: "${SAMBA_USER}:${SAMBA_PASSWORD}"
+      SAMBA_SHARES: |
+        HomeServer:${SAMBA_SHARE_PATH}:rw:${SAMBA_USER}
+    volumes:
+      - ${SAMBA_SHARE_PATH}:${SAMBA_SHARE_PATH}
+    networks: [nilay-net]
+
+  # --- 13. Portainer ---
+  portainer:
+    image: portainer/portainer-ce:latest
+    container_name: portainer
+    restart: always
+    ports:
+      - "${PORTAINER_PORT}:9000"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ${PORTAINER_DATA}:/data
+    networks: [nilay-net]
+
+  # --- 14. Minecraft ---
+  minecraft:
+    image: itzg/minecraft-server
+    container_name: minecraft-server
+    restart: unless-stopped
+    ports:
+      - "${MINECRAFT_PORT}:25565"
+    environment:
+      EULA: "TRUE"
+      ONLINE_MODE: "FALSE"
+      TYPE: "PAPER"
+      VERSION: "LATEST"
+      MEMORY: ${MINECRAFT_MEMORY}
+      ENABLE_RCON: "true"
+      RCON_PASSWORD: ${MINECRAFT_RCON_PASSWORD}
+    volumes:
+      - ${MINECRAFT_DATA}:/data
+    networks: [nilay-net]
+
+  # --- 15. Glance ---
+  glance:
+    image: glanceapp/glance:latest
+    container_name: glance
+    restart: always
+    ports:
+      - "${GLANCE_PORT}:8080"
+    volumes:
+      - ${GLANCE_CONFIG}:/app/config/glance.yml
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    environment:
+      TZ: ${TZ}
+    networks: [nilay-net]
+
+  # --- 16. Glances ---
+  glances:
+    image: nicolargo/glances:latest
+    container_name: glances
+    restart: always
+    environment:
+      GLANCES_OPT: "-w"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    networks: [nilay-net]
+
+  # --- 17. Vaultwarden ---
+  vaultwarden:
+    image: vaultwarden/server:latest
+    container_name: vaultwarden
+    restart: always
+    environment:
+      SIGNUPS_ALLOWED: "true"
+    volumes:
+      - ${VAULTWARDEN_DATA}:/data
+    ports:
+      - "${VAULTWARDEN_PORT}:80"
+    networks: [nilay-net]
+
+  # --- 18. Stirling PDF ---
+  stirling-pdf:
+    image: stirlingtools/stirling-pdf:latest
+    container_name: stirling-pdf
+    restart: always
+    ports:
+      - "${STIRLING_PORT}:8080"
+    volumes:
+      - ${STIRLING_CONFIGS}:/configs
+      - ${STIRLING_CUSTOM}:/customFiles
+      - ${STIRLING_LOGS}:/logs
+    environment:
+      DOCKER_ENABLE_SECURITY: "false"
+    networks: [nilay-net]
+
+  # --- 19. Speedtest Tracker ---
+  speedtest-tracker:
+    image: lscr.io/linuxserver/speedtest-tracker:latest
+    container_name: speedtest-tracker
+    restart: unless-stopped
+    ports:
+      - "${SPEEDTEST_PORT}:80"
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      APP_KEY: ${SPEEDTEST_APP_KEY}
+      APP_URL: ${SPEEDTEST_URL}
+      DB_CONNECTION: sqlite
+      SPEEDTEST_SCHEDULE: "0 */1 * * *" # (Cron job) Run a speedtest every 2 hours.
+      SPEEDTEST_ON_START: "true" # Run a test when the container is started.
+    volumes:
+      - ${SPEEDTEST_DATA}:/config
+    networks: [nilay-net]
+
+  # --- 20. SearXNG ---
+  searxng:
+    image: searxng/searxng:latest
+    container_name: searxng
+    restart: always
+    ports:
+      - "${SEARXNG_PORT}:8080"
+    volumes:
+      - ${SEARXNG_DATA}:/etc/searxng
+    environment:
+      SEARXNG_BASE_URL: ${SEARXNG_BASE_URL}
+    networks: [nilay-net]
+
+  # --- 21. Linkwarden ---
+  linkwarden:
+    image: ghcr.io/linkwarden/linkwarden:latest
+    container_name: linkwarden
+    restart: always
+    ports:
+      - "${LINKWARDEN_PORT}:3000"
+    environment:
+      DATABASE_URL: ${LINKWARDEN_DATABASE_URL}
+      NEXTAUTH_URL: ${LINKWARDEN_URL}
+      NEXTAUTH_SECRET: ${LINKWARDEN_SECRET}
+    volumes:
+      - ${LINKWARDEN_DATA}:/data/data
+    depends_on: [linkwarden-db]
+    networks: [nilay-net]
+
+  linkwarden-db:
+    image: postgres:16-alpine
+    container_name: linkwarden-db
+    restart: always
+    environment:
+      POSTGRES_USER: ${LINKWARDEN_DB_USER}
+      POSTGRES_PASSWORD: ${LINKWARDEN_DB_PASSWORD}
+      POSTGRES_DB: ${LINKWARDEN_DB}
+    volumes:
+      - ${LINKWARDEN_PGDATA}:/var/lib/postgresql/data
+    networks: [nilay-net]
+
+  # --- 22. SABnzbd (Usenet) ---
+  sabnzbd:
+    image: lscr.io/linuxserver/sabnzbd:latest
+    container_name: sabnzbd
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    volumes:
+      - ${ARRS_CONFIG}/sabnzbd:/config
+      - ${MEDIA_ROOT}/usenet:/data/usenet
+    ports:
+      - "${SABNZBD_PORT}:8080"
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 23. qBittorrent (Standard) ---
+  qbittorrent:
+    image: lscr.io/linuxserver/qbittorrent:latest
+    container_name: qbittorrent
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+      WEBUI_PORT: 8090
+    volumes:
+      - ${ARRS_CONFIG}/qbittorrent:/config
+      - ${MEDIA_ROOT}/torrents:/data/torrents
+    ports:
+      - "${QBIT_PORT}:8090"
+      - "6881:6881"
+      - "6881:6881/udp"
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 24. RDTClient (Debrid) ---
+  rdtclient:
+    image: rogerfar/rdtclient
+    container_name: rdtclient
+    restart: always
+    logging:
+      driver: json-file
+      options:
+        max-size: 10m
+    volumes:
+      - ${MEDIA_ROOT}/torrents:/data/downloads
+      - ${ARRS_CONFIG}/rdtclient:/data/db
+    ports:
+      - "${RDT_PORT}:6500"
+    networks: [nilay-net]
+
+  # --- 25. Bazarr (Subtitles) ---
+  bazarr:
+    image: lscr.io/linuxserver/bazarr:latest
+    container_name: bazarr
+    ports:
+      - "${BAZARR_PORT}:6767"
+    volumes:
+      - ${ARRS_CONFIG}/bazarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 26. Lidarr (Music) ---
+  lidarr:
+    image: lscr.io/linuxserver/lidarr:latest
+    container_name: lidarr
+    ports:
+      - "${LIDARR_PORT}:8686"
+    volumes:
+      - ${ARRS_CONFIG}/lidarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 27. Prowlarr (Indexers) ---
+  prowlarr:
+    image: lscr.io/linuxserver/prowlarr:latest
+    container_name: prowlarr
+    ports:
+      - "${PROWLARR_PORT}:9696"
+    volumes:
+      - ${ARRS_CONFIG}/prowlarr:/config
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    dns:
+      - 1.1.1.1
+      - 8.8.8.8
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 28. Radarr (Movies) ---
+  radarr:
+    image: lscr.io/linuxserver/radarr:latest
+    container_name: radarr
+    ports:
+      - "${RADARR_PORT}:7878"
+    volumes:
+      - ${ARRS_CONFIG}/radarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 29. Sonarr (TV) ---
+  sonarr:
+    image: lscr.io/linuxserver/sonarr:latest
+    container_name: sonarr
+    ports:
+      - "${SONARR_PORT}:8989"
+    volumes:
+      - ${ARRS_CONFIG}/sonarr:/config
+      - ${MEDIA_ROOT}:/data
+    environment:
+      PUID: ${PUID}
+      PGID: ${PGID}
+      TZ: ${TZ}
+    restart: unless-stopped
+    networks: [nilay-net]
+
+  # --- 30. FlareSolverr ---
+  flaresolverr:
+    image: flaresolverr/flaresolverr:latest
+    container_name: flaresolverr
+    environment:
+      - LOG_LEVEL=info
+      - TZ=Asia/Kolkata
+    ports:
+      - "8191:8191"
+    restart: unless-stopped
+    networks: [nilay-net]
+  # --- 31. Nginx Proxy Manager ---
+  npm:
+    image: 'jc21/nginx-proxy-manager:latest'
+    container_name: npm
+    restart: unless-stopped
+    ports:
+      - '80:80'      # HTTP traffic
+      - '443:443'    # HTTPS traffic
+      - '81:81'      # Admin Interface
+    volumes:
+      - ./npm/data:/data
+      - ./npm/letsencrypt:/etc/letsencrypt
+    networks: [ nilay-net ]
+
+  # --- 32. Home Assistant ---
+  homeassistant:
+    image: ghcr.io/home-assistant/home-assistant:stable
+    container_name: homeassistant
+    restart: always
+    privileged: true
+    volumes:
+      - ${HASS_CONFIG}:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+      - /dev:/dev  # Allows HASS to see USB devices like Zigbee sticks
+    environment:
+      - TZ=${TZ}
+    ports:
+      - "${HASS_PORT}:8123"
+    networks:
+      - nilay-net
+    depends_on:
+      - db
+
+  # --- 33. Cloudflared (The Tunnel) ---
+  cloudflared:
+    image: cloudflare/cloudflared:latest
+    container_name: cloudflared
+    restart: always
+    environment:
+      - TUNNEL_TOKEN=eyJhIjoiYWEzNDBhMGQxN2NkY2M0MmMyY2ZlZDYyY2ZmMWY4ODEiLCJ0IjoiY2JkNDJmZDktYWE1MS00MjJlLThjYWItNDgzYTVkM2Y3MGFjIiwicyI6IlpUQTBOVGxtWVRFdFlUVTRNeTAwWkRBMkxXSXdZbVl0TXpsbFltSTBaV0k1WWpjMCJ9
+    command: tunnel --no-autoupdate run
+    networks: 
+      - nilay-net
+  
+  # --- 34. n8n Automation ---
+  n8n:
+    image: docker.n8n.io/n8nio/n8n
+    container_name: n8n
+    restart: always
+    ports:
+      - "${N8N_PORT}:5678"
+    environment:
+      - N8N_HOST=${N8N_HOST:-localhost}
+      - N8N_PORT=5678
+      - N8N_PROTOCOL=http
+      - NODE_ENV=production
+      - WEBHOOK_URL=https://${N8N_DOMAIN:-localhost}/
+      - GENERIC_TIMEZONE=${TZ}
+      - N8N_SECURE_COOKIE 
+    volumes:
+      - ${N8N_DATA}:/home/node/.n8n
+      - /var/run/docker.sock:/var/run/docker.sock # Optional: if you want n8n to control docker
+    networks:
+      - nilay-net
