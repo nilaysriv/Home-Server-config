@@ -582,7 +582,7 @@ services:
     container_name: cloudflared
     restart: always
     environment:
-      - TUNNEL_TOKEN=eyJhIjoiYWEzNDBhMGQxN2NkY2M0MmMyY2ZlZDYyY2ZmMWY4ODEiLCJ0IjoiY2JkNDJmZDktYWE1MS00MjJlLThjYWItNDgzYTVkM2Y3MGFjIiwicyI6IlpUQTBOVGxtWVRFdFlUVTRNeTAwWkRBMkxXSXdZbVl0TXpsbFltSTBaV0k1WWpjMCJ9
+      - TUNNEL_TOKEN=[API TOKEN FOR CLOUDFARE]
     command: tunnel --no-autoupdate run
     networks: 
       - nilay-net
